@@ -10,7 +10,7 @@
   <packaging>jar</packaging>
 
   <name>Keycloak Admin Client Adapter</name>
-  <description>A Keycloak Admin Client Adapter to provide convenience methods to create or login users</description>
+  <description>A keycloak admin client adapter to provide convenience methods to create or login users</description>
   <url>https://github.com/openknowledge</url>
 
   <developers>
