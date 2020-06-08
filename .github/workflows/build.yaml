@@ -48,6 +48,7 @@ jobs:
         name: Deploy artifact
         run: |
           echo "run mvn deploy"
+          gpg --version
           mvn deploy
         env:
           GPG_TTY: $(tty)
@@ -55,6 +56,7 @@ jobs:
         name: Verify artifact
         run: |
           echo "run mvn verify"
+          gpg --version
           mvn verify
         env:
           GPG_TTY: $(tty)
