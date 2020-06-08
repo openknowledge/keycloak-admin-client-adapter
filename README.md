@@ -1,5 +1,7 @@
 # Keycloak Admin Client Adapter
 
+[![Maven Central](https://img.shields.io/maven-central/v/de.openknowledge.authentication/keycloak-admin-client-adapter.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22de.openknowledge.authentication%22%20AND%20a:%22keycloak-admin-client-adapter%22)
+
 This adapter provides convenience methods to register and login users to keycloak. It's based on the official 
 keycloak admin client to work with a keycloak server from a microprofile based microservice.
 

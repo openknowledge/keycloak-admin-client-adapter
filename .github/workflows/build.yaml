@@ -48,17 +48,17 @@ jobs:
         run: |
           echo "run mvn package"
           mvn package
-      - if: steps.get_branch.outputs.branch == 'master'
-        name: Deploy artifact
-        run: |
-          echo "run mvn deploy"
-          mvn --no-transfer-progress --batch-mode -Dgpg.passphrase=${{ secrets.GPG_KEY_PASSWORD }} deploy
-        env:
-          GPG_TTY: $(tty)
       - if: steps.get_branch.outputs.branch == 'develop'
         name: Verify artifact
         run: |
           echo "run mvn verify"
           mvn --no-transfer-progress --batch-mode -Dgpg.passphrase=${{ secrets.GPG_KEY_PASSWORD }} verify
+      - if: steps.get_branch.outputs.branch == 'master'
+        name: Publish to Central Repository
+        run: |
+          echo "run mvn deploy"
+          mvn --no-transfer-progress --batch-mode -Dgpg.passphrase=${{ secrets.GPG_KEY_PASSWORD }} deploy
         env:
-          GPG_TTY: $(tty)
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+
