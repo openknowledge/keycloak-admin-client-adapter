@@ -51,7 +51,7 @@ jobs:
           mvn deploy
         env:
           GPG_TTY: $(tty)
-      - if: github.ref == 'develop'
+      - if: ${GITHUB_REF##*/} == 'develop'
         name: Verify artifact
         run: |
           echo "run mvn verify
