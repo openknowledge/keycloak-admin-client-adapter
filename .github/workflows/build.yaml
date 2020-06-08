@@ -18,6 +18,7 @@ jobs:
           echo "${GPG_KEY}" | gpg --dearmor | gpg --batch --yes --import -
         env:
           GPG_KEY: ${{ secrets.GPG_KEY }}
+          GPG_TTY: $(tty)
       - name: Branch name
         run: echo "running on branch ${GITHUB_REF##*/}"
       - name: Cache Maven data
