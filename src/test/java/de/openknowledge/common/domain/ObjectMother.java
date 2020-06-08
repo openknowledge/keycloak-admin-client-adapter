@@ -42,7 +42,7 @@ public class ObjectMother {
   public static final ClientId CLIENT_ID = ClientId.fromValue("clientId");
 
   public static Login createLogin() {
-    return new Login(USERNAME, MAIL_ADDRESS, PASSWORD);
+    return new Login(USERNAME, PASSWORD);
   }
 
   public static List<RoleRepresentation> createRoleRepresentations() {
