@@ -32,7 +32,7 @@
   <scm>
     <url>https://github.com/openknowledge/keycloak-admin-client-adapter</url>
     <connection>scm:git:git://github.com/openknowledge/keycloak-admin-client-adapter.git</connection>
-    <developerConnection>scm:git:git@github.com:openknowledge/keycloak-admin-client-adapter.git</developerConnection>
+    <developerConnection>scm:git:ssh://github.com:openknowledge/keycloak-admin-client-adapter.git</developerConnection>
   </scm>
 
   <distributionManagement>
@@ -304,6 +304,7 @@
           <serverId>ossrh</serverId>
           <nexusUrl>https://oss.sonatype.org/</nexusUrl>
           <autoReleaseAfterClose>true</autoReleaseAfterClose>
+          <stagingProgressTimeoutMinutes>10</stagingProgressTimeoutMinutes>
         </configuration>
       </plugin>
     </plugins>
