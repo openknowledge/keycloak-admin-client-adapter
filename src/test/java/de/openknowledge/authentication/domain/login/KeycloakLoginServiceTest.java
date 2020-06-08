@@ -56,9 +56,12 @@ public class KeycloakLoginServiceTest {
 
   private Login login;
 
+  private RefreshToken refreshToken;
+
   @BeforeEach
   void setup() {
     login = new Login(Username.fromValue("test.user"), Password.fromValue("Test1234"));
+    refreshToken = RefreshToken.fromValue("ABC-123");
     keycloakLoginService = new KeycloakLoginService(keycloakAdapter, "realmName", "clientId");
     response = createResponse();
   }
@@ -68,6 +71,17 @@ public class KeycloakLoginServiceTest {
     when(keycloakAdapter.getTokenService()).thenReturn(tokenService);
     when(tokenService.grantToken(eq("realmName"), any())).thenReturn(response);
     LoginToken loginToken = keycloakLoginService.login(login);
+    assertThat(loginToken.getToken()).isEqualTo(TOKEN);
+    assertThat(loginToken.getExpiresIn()).isEqualTo(EXPIRES_IN);
+    assertThat(loginToken.getRefreshToken()).isEqualTo(REFRESH_TOKEN);
+    assertThat(loginToken.getRefreshExpiresIn()).isEqualTo(REFRESH_EXPIRES_IN);
+  }
+
+  @Test
+  void refresh() {
+    when(keycloakAdapter.getTokenService()).thenReturn(tokenService);
+    when(tokenService.refreshToken(eq("realmName"), any())).thenReturn(response);
+    LoginToken loginToken = keycloakLoginService.refresh(refreshToken);
     assertThat(loginToken.getToken()).isEqualTo(TOKEN);
     assertThat(loginToken.getExpiresIn()).isEqualTo(EXPIRES_IN);
     assertThat(loginToken.getRefreshToken()).isEqualTo(REFRESH_TOKEN);

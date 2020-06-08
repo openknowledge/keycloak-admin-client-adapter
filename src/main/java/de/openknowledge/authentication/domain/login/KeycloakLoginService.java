@@ -18,6 +18,8 @@ package de.openknowledge.authentication.domain.login;
 import static org.keycloak.OAuth2Constants.CLIENT_ID;
 import static org.keycloak.OAuth2Constants.GRANT_TYPE;
 import static org.keycloak.OAuth2Constants.PASSWORD;
+import static org.keycloak.OAuth2Constants.REFRESH_TOKEN;
+import static org.keycloak.OAuth2Constants.USERNAME;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -59,13 +61,28 @@ public class KeycloakLoginService {
         response.getRefreshToken(), response.getRefreshExpiresIn());
   }
 
+  public LoginToken refresh(RefreshToken refreshToken) {
+    AccessTokenResponse response = refreshToken(refreshToken);
+    return new LoginToken(response.getToken(), response.getExpiresIn(),
+        response.getRefreshToken(), response.getRefreshExpiresIn());
+  }
+
   private AccessTokenResponse grantToken(Login login) {
     Form form = new Form().param(GRANT_TYPE, PASSWORD)
-        .param("username", login.getUsername().getValue())
-        .param("password", login.getPassword().getValue())
+        .param(USERNAME, login.getUsername().getValue())
+        .param(PASSWORD, login.getPassword().getValue())
         .param(CLIENT_ID, clientId.getValue());
     synchronized (this) {
       return keycloakAdapter.getTokenService().grantToken(realmName.getValue(), form.asMap());
+    }
+  }
+
+  private AccessTokenResponse refreshToken(RefreshToken refreshToken) {
+    Form form = new Form().param(GRANT_TYPE, REFRESH_TOKEN)
+        .param(REFRESH_TOKEN, refreshToken.getValue())
+        .param(CLIENT_ID, clientId.getValue());
+    synchronized (this) {
+      return keycloakAdapter.getTokenService().refreshToken(realmName.getValue(), form.asMap());
     }
   }
 }
