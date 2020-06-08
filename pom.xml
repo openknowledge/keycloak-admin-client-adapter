@@ -6,11 +6,11 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.openknowledge.authentication</groupId>
   <artifactId>keycloak-admin-client-adapter</artifactId>
-  <version>1.0.0</version>
+  <version>1.1.0</version>
   <packaging>jar</packaging>
 
   <name>Keycloak Admin Client Adapter</name>
-  <description>A keycloak admin client adapter to provide convenience methods to create or login users</description>
+  <description>A keycloak admin client adapter to provide convenience methods to create or login users on keycloak</description>
   <url>https://github.com/openknowledge</url>
 
   <developers>
@@ -288,6 +288,12 @@
             </goals>
           </execution>
         </executions>
+        <configuration>
+          <gpgArguments>
+            <arg>--pinentry-mode</arg>
+            <arg>loopback</arg>
+          </gpgArguments>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.sonatype.plugins</groupId>
