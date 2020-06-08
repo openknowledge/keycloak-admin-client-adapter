@@ -25,7 +25,7 @@ jobs:
           maven_temp_dir="$(mktemp -d)"
           cp pom.xml "${maven_temp_dir}"
           pushd "${maven_temp_dir}"
-          mvn verify || true
+          mvn package || true
           sleep 10
           popd
           rm -rf "${maven_temp_dir}"
