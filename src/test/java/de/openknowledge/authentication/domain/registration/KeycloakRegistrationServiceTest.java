@@ -59,7 +59,6 @@ import de.openknowledge.authentication.domain.RealmName;
 import de.openknowledge.authentication.domain.group.GroupName;
 import de.openknowledge.authentication.domain.login.Login;
 import de.openknowledge.authentication.domain.role.RoleName;
-import de.openknowledge.authentication.domain.user.UserIdentifier;
 import de.openknowledge.common.domain.MockResponse;
 
 @ExtendWith(MockitoExtension.class)

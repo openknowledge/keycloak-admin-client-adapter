@@ -24,9 +24,7 @@ import javax.json.bind.annotation.JsonbTransient;
 
 import org.keycloak.common.util.Time;
 
-import de.openknowledge.authentication.domain.login.Username;
-import de.openknowledge.authentication.domain.login.EmailAddress;
-import de.openknowledge.authentication.domain.user.UserIdentifier;
+import de.openknowledge.authentication.domain.user.Username;
 
 public class Token {
 

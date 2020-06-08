@@ -17,26 +17,27 @@ package de.openknowledge.authentication.domain.login;
 
 import java.util.Objects;
 
+import de.openknowledge.authentication.domain.user.Password;
+import de.openknowledge.authentication.domain.user.Username;
+
 public class Login {
 
   private final Username username;
 
-  private final EmailAddress emailAddress;
-
   private final Password password;
 
-  public Login(Username theUsername, EmailAddress theEmailAddress, Password thePassword) {
+  /**
+   * Login for user in keycloak with username and password
+   * @param theUsername - the keycloak username
+   * @param thePassword - the keycloak password
+   */
+  public Login(Username theUsername, Password thePassword) {
     username = theUsername;
-    emailAddress = theEmailAddress;
     password = thePassword;
   }
 
   public Username getUsername() {
     return username;
-  }
-
-  public EmailAddress getEmailAddress() {
-    return emailAddress;
   }
 
   public Password getPassword() {
@@ -53,20 +54,18 @@ public class Login {
     }
     Login login = (Login)o;
     return Objects.equals(getUsername(), login.getUsername())
-        && Objects.equals(getEmailAddress(), login.getEmailAddress())
         && Objects.equals(getPassword(), login.getPassword());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getUsername(), getEmailAddress(), getPassword());
+    return Objects.hash(getUsername(), getPassword());
   }
 
   @Override
   public String toString() {
     return "Login{"
         + "username=" + username
-        + ", emailAddress=" + emailAddress
         + ", password=" + password
         + "}";
   }

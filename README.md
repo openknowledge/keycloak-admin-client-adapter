@@ -31,6 +31,3 @@ keycloak.registration.realm=<KEYCLOAK_REALM>
 keycloak.registration.clientId=<KEYCLOAK_REALM_CLIENT_ID>
 keycloak.registration.mode=<KEYCLOAK_REGISTRATION_MODE: example = DOUBLE_OPT_IN>
 keycloak.registration.roleRequire=<KEYCLOAK_REGISTRATION_ROLE_REQUIRED: example = true>
-
-
-

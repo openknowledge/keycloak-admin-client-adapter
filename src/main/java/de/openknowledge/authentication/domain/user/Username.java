@@ -13,30 +13,26 @@
  * See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package de.openknowledge.authentication.domain.login;
+package de.openknowledge.authentication.domain.user;
 
 import static org.apache.commons.lang3.Validate.notBlank;
 
 import de.openknowledge.common.domain.AbstractStringValueObject;
 
-public class Password extends AbstractStringValueObject {
+public class Username extends AbstractStringValueObject {
 
-  private Password(String value) {
+  private Username(String value) {
     super(value);
   }
 
-  protected Password() {
+  protected Username() {
     super();
     // for framework
   }
 
-  public static Password fromValue(String password) {
-    notBlank(password, "password may not be blank");
-    return new Password(password);
+  public static Username fromValue(String username) {
+    notBlank(username, "username may not be blank");
+    return new Username(username);
   }
 
-  @Override
-  public String toString() {
-    return "******";
-  }
 }

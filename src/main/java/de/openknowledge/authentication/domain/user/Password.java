@@ -19,19 +19,24 @@ import static org.apache.commons.lang3.Validate.notBlank;
 
 import de.openknowledge.common.domain.AbstractStringValueObject;
 
-public class UserIdentifier extends AbstractStringValueObject {
+public class Password extends AbstractStringValueObject {
 
-  private UserIdentifier(String value) {
+  private Password(String value) {
     super(value);
   }
 
-  protected UserIdentifier() {
+  protected Password() {
     super();
     // for framework
   }
 
-  public static UserIdentifier fromValue(String userIdentifier) {
-    notBlank(userIdentifier, "userIdentifier may not be blank");
-    return new UserIdentifier(userIdentifier);
+  public static Password fromValue(String password) {
+    notBlank(password, "password may not be blank");
+    return new Password(password);
+  }
+
+  @Override
+  public String toString() {
+    return "******";
   }
 }
