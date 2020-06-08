@@ -44,16 +44,17 @@ jobs:
         run: |
           echo "run mvn package"
           mvn package
-      - name: Post build artifact
-        - if: github.ref == 'master'
-          name: IF
-          run: |
-            echo "run mvn deploy"
-            mvn deploy
-        - if: github.ref != 'master'
-          name: ELSE
-          run: |
-            echo "run mvn verify
-            mvn verify
+      - if: github.ref == 'master'
+        name: Deploy artifact
+        run: |
+          echo "run mvn deploy"
+          mvn deploy
+        env:
+          GPG_TTY: $(tty)
+      - if: github.ref == 'develop'
+        name: Verify artifact
+        run: |
+          echo "run mvn verify
+          mvn verify
         env:
           GPG_TTY: $(tty)
