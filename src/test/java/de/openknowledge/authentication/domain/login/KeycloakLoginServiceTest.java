@@ -29,8 +29,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.openknowledge.authentication.domain.KeycloakAdapter;
-import de.openknowledge.authentication.domain.user.Password;
-import de.openknowledge.authentication.domain.user.Username;
+import de.openknowledge.authentication.domain.Password;
+import de.openknowledge.authentication.domain.Username;
 
 @ExtendWith(MockitoExtension.class)
 public class KeycloakLoginServiceTest {

@@ -2,7 +2,6 @@ package de.openknowledge.authentication.domain.login;
 
 import static org.apache.commons.lang3.Validate.notBlank;
 
-import de.openknowledge.authentication.domain.user.Username;
 import de.openknowledge.common.domain.AbstractStringValueObject;
 
 public class RefreshToken extends AbstractStringValueObject {

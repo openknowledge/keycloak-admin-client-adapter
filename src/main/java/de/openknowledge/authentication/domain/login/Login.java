@@ -17,8 +17,8 @@ package de.openknowledge.authentication.domain.login;
 
 import java.util.Objects;
 
-import de.openknowledge.authentication.domain.user.Password;
-import de.openknowledge.authentication.domain.user.Username;
+import de.openknowledge.authentication.domain.Password;
+import de.openknowledge.authentication.domain.Username;
 
 public class Login {
 
