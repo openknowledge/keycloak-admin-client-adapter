@@ -13,6 +13,26 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 11
+      - name: Cache Maven data
+        uses: actions/cache@v1
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Build up cache
+        run: |
+          echo "${MAVEN_SETTINGS}" > ~/.m2/settings.xml
+          maven_temp_dir="$(mktemp -d)"
+          cp pom.xml "${maven_temp_dir}"
+          pushd "${maven_temp_dir}"
+          mvn verify || true
+          sleep 10
+          popd
+          rm -rf "${maven_temp_dir}"
+        env:
+          MAVEN_SETTINGS: ${{ secrets.MAVEN_SETTINGS }}
+          MAVEN_OPTS: >
+            -Dmaven.wagon.http.retryHandler.count=5
       - name: Build artifact
         run: |
           mvn verify
