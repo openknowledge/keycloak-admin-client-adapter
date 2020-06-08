@@ -18,7 +18,6 @@ jobs:
           echo "${GPG_KEY}" | gpg --dearmor | gpg --batch --yes --import -
         env:
           GPG_KEY: ${{ secrets.GPG_KEY }}
-          GPG_TTY: $(tty)
       - name: Branch name
         run: echo "running on branch ${GITHUB_REF##*/}"
       - name: Cache Maven data
@@ -42,12 +41,19 @@ jobs:
           MAVEN_OPTS: >
             -Dmaven.wagon.http.retryHandler.count=5
       - name: Build artifact
-        if: github.ref != 'master'
         run: |
-          echo "run mvn verify"
-          mvn verify
-      - name: Upload artifact
-        if: github.ref == 'master'
-        run: |
-          echo "run mvn deploy"
-          mvn deploy
+          echo "run mvn package"
+          mvn package
+      - name: Post build artifact
+        - if: github.ref == 'master'
+          name: IF
+          run: |
+            echo "run mvn deploy"
+            mvn deploy
+        - if: github.ref != 'master'
+          name: ELSE
+          run: |
+            echo "run mvn verify
+            mvn verify
+        env:
+          GPG_TTY: $(tty)
