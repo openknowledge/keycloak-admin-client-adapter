@@ -20,8 +20,10 @@ jobs:
           echo "${GPG_KEY}" | gpg --dearmor | gpg --batch --yes --import -
         env:
           GPG_KEY: ${{ secrets.GPG_KEY }}
-      - name: Branch name
-        run: echo "running on branch ${GITHUB_REF##*/}"
+      - name: Get branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF##*/})"
+        id: get_branch
       - name: Cache Maven packages
         uses: actions/cache@v1
         with:
@@ -46,14 +48,14 @@ jobs:
         run: |
           echo "run mvn package"
           mvn package
-      - if: github.ref == 'master'
+      - if: steps.get_branch.outputs.branch == 'master'
         name: Deploy artifact
         run: |
           echo "run mvn deploy"
           mvn --no-transfer-progress --batch-mode -Dgpg.passphrase=${{ secrets.GPG_KEY_PASSWORD }} deploy
         env:
           GPG_TTY: $(tty)
-      - if: github.ref != 'master'
+      - if: steps.get_branch.outputs.branch == 'develop'
         name: Verify artifact
         run: |
           echo "run mvn verify"
