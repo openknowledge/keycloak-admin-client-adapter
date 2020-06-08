@@ -12,6 +12,7 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 11
+          server-id: ossrh
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
       - name: Configure Git signing
@@ -49,15 +50,13 @@ jobs:
         name: Deploy artifact
         run: |
           echo "run mvn deploy"
-          gpg --version
-          mvn deploy
+          mvn --no-transfer-progress --batch-mode -Dgpg.passphrase=${{ secrets.GPG_KEY_PASSWORD }} deploy
         env:
           GPG_TTY: $(tty)
       - if: github.ref != 'master'
         name: Verify artifact
         run: |
           echo "run mvn verify"
-          gpg --version
           mvn --no-transfer-progress --batch-mode -Dgpg.passphrase=${{ secrets.GPG_KEY_PASSWORD }} verify
         env:
           GPG_TTY: $(tty)
