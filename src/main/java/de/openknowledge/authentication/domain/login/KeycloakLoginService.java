@@ -19,6 +19,7 @@ import static org.keycloak.OAuth2Constants.CLIENT_ID;
 import static org.keycloak.OAuth2Constants.GRANT_TYPE;
 import static org.keycloak.OAuth2Constants.PASSWORD;
 import static org.keycloak.OAuth2Constants.REFRESH_TOKEN;
+import static org.keycloak.OAuth2Constants.USERNAME;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -68,8 +69,8 @@ public class KeycloakLoginService {
 
   private AccessTokenResponse grantToken(Login login) {
     Form form = new Form().param(GRANT_TYPE, PASSWORD)
-        .param("username", login.getUsername().getValue())
-        .param("password", login.getPassword().getValue())
+        .param(USERNAME, login.getUsername().getValue())
+        .param(PASSWORD, login.getPassword().getValue())
         .param(CLIENT_ID, clientId.getValue());
     synchronized (this) {
       return keycloakAdapter.getTokenService().grantToken(realmName.getValue(), form.asMap());
@@ -78,10 +79,10 @@ public class KeycloakLoginService {
 
   private AccessTokenResponse refreshToken(RefreshToken refreshToken) {
     Form form = new Form().param(GRANT_TYPE, REFRESH_TOKEN)
-        .param("refresh_token", refreshToken.getValue())
+        .param(REFRESH_TOKEN, refreshToken.getValue())
         .param(CLIENT_ID, clientId.getValue());
     synchronized (this) {
-      return keycloakAdapter.getTokenService().grantToken(realmName.getValue(), form.asMap());
+      return keycloakAdapter.getTokenService().refreshToken(realmName.getValue(), form.asMap());
     }
   }
 }
