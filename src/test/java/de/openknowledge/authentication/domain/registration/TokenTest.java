@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.openknowledge.authentication.domain.user.Username;
+import de.openknowledge.authentication.domain.Username;
 
 class TokenTest {
 

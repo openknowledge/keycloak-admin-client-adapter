@@ -5,8 +5,8 @@ import static org.apache.commons.lang3.Validate.notNull;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.openknowledge.authentication.domain.user.Password;
-import de.openknowledge.authentication.domain.user.Username;
+import de.openknowledge.authentication.domain.Password;
+import de.openknowledge.authentication.domain.Username;
 
 public class UserAccount {
 
