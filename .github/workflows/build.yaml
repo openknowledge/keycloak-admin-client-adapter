@@ -13,6 +13,12 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 11
+      - name: Configure Git signing
+          run: |
+            GIT_EMAIL=tim.debuhr@ms.ingenico.com
+            echo "${GPG_KEY}" |  gpg --dearmor | gpg --batch --yes --import -
+          env:
+            GPG_KEY: ${{ secrets.GPG_KEY }}
       - name: Branch name
         run: echo "running on branch ${GITHUB_REF##*/}"
       - name: Cache Maven data
