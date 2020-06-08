@@ -61,6 +61,8 @@ public class KeycloakRegistrationService {
 
   private RegistrationMode registrationMode;
 
+  private RegistrationRequirement registrationRequirement;
+
   @SuppressWarnings("unused")
   protected KeycloakRegistrationService() {
     // for framework
@@ -70,11 +72,13 @@ public class KeycloakRegistrationService {
   public KeycloakRegistrationService(KeycloakAdapter aKeycloakAdapter,
       @ConfigProperty(name = "keycloak.registration.realm") String aRealm,
       @ConfigProperty(name = "keycloak.registration.clientId") String aClientId,
-      @ConfigProperty(name = "keycloak.registration.mode") String aRegistrationMode) {
+      @ConfigProperty(name = "keycloak.registration.mode", defaultValue = "DEFAULT") String aRegistrationMode,
+      @ConfigProperty(name = "keycloak.registration.roleRequire", defaultValue = "DEFAULT") String aRegistrationRequirement) {
     keycloakAdapter = aKeycloakAdapter;
     realmName = RealmName.fromValue(aRealm);
     clientId = ClientId.fromValue(aClientId);
     registrationMode = RegistrationMode.fromValue(aRegistrationMode);
+    registrationRequirement = RegistrationRequirement.fromValue(aRegistrationRequirement);
   }
 
   public boolean checkAlreadyExist(Login login) {
@@ -98,8 +102,10 @@ public class KeycloakRegistrationService {
     String userId = path.replaceAll(".*/([^/]+)$", "$1");
     UserIdentifier userIdentifier = UserIdentifier.fromValue(userId);
 
-    // client id as role to access client (because: required role extension)
-    joinRoles(userIdentifier, RoleName.fromValue(clientId.getValue()));
+    if (RegistrationRequirement.ROLE.equals(registrationRequirement)) {
+      // client id as role to access client (because: required role extension)
+      joinRoles(userIdentifier, RoleName.fromValue(clientId.getValue()));
+    }
 
     return userIdentifier;
   }

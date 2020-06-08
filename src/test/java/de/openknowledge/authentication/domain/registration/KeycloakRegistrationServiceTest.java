@@ -99,7 +99,8 @@ public class KeycloakRegistrationServiceTest {
     service = new KeycloakRegistrationService(keycloakAdapter,
         REALM_NAME.getValue(),
         CLIENT_ID.getValue(),
-        RegistrationMode.DOUBLE_OPT_IN.name());
+        RegistrationMode.DOUBLE_OPT_IN.name(),
+        RegistrationRequirement.ROLE.name());
   }
 
   @Test
@@ -136,8 +137,8 @@ public class KeycloakRegistrationServiceTest {
 
   @Test
   void returnValidOnCreateUserWithoutDoubleOptIn() {
-    KeycloakRegistrationService noDoubleOptInService =
-        new KeycloakRegistrationService(keycloakAdapter, REALM_NAME.getValue(), CLIENT_ID.getValue(), RegistrationMode.DEFAULT.name());
+    KeycloakRegistrationService noDoubleOptInService = new KeycloakRegistrationService(keycloakAdapter,
+        REALM_NAME.getValue(), CLIENT_ID.getValue(), RegistrationMode.DEFAULT.name(), RegistrationRequirement.ROLE.name());
     // createUser
     doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
     doReturn(new MockResponse(201, USER_IDENTIFIER)).when(usersResource).create(any(UserRepresentation.class));
