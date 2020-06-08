@@ -13,25 +13,26 @@
  * See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package de.openknowledge.authentication.domain.user;
+package de.openknowledge.authentication.domain.registration;
 
 import static org.apache.commons.lang3.Validate.notBlank;
 
 import de.openknowledge.common.domain.AbstractStringValueObject;
 
-public class UserIdentifier extends AbstractStringValueObject {
+public class EmailAddress extends AbstractStringValueObject {
 
-  private UserIdentifier(String value) {
+  private EmailAddress(String value) {
     super(value);
   }
 
-  protected UserIdentifier() {
+  protected EmailAddress() {
     super();
     // for framework
   }
 
-  public static UserIdentifier fromValue(String userIdentifier) {
-    notBlank(userIdentifier, "userIdentifier may not be blank");
-    return new UserIdentifier(userIdentifier);
+  public static EmailAddress fromValue(String emailAddress) {
+    notBlank(emailAddress, "emailAddress may not be blank");
+    return new EmailAddress(emailAddress);
   }
+
 }

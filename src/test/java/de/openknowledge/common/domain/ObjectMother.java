@@ -23,12 +23,12 @@ import org.keycloak.representations.idm.RoleRepresentation;
 import de.openknowledge.authentication.domain.ClientId;
 import de.openknowledge.authentication.domain.RealmName;
 import de.openknowledge.authentication.domain.login.Login;
-import de.openknowledge.authentication.domain.login.Password;
-import de.openknowledge.authentication.domain.login.Username;
+import de.openknowledge.authentication.domain.user.Password;
+import de.openknowledge.authentication.domain.user.Username;
 import de.openknowledge.authentication.domain.registration.Issuer;
 import de.openknowledge.authentication.domain.registration.VerificationLink;
-import de.openknowledge.authentication.domain.login.EmailAddress;
-import de.openknowledge.authentication.domain.user.UserIdentifier;
+import de.openknowledge.authentication.domain.registration.EmailAddress;
+import de.openknowledge.authentication.domain.registration.UserIdentifier;
 
 public class ObjectMother {
 
@@ -42,7 +42,7 @@ public class ObjectMother {
   public static final ClientId CLIENT_ID = ClientId.fromValue("clientId");
 
   public static Login createLogin() {
-    return new Login(USERNAME, MAIL_ADDRESS, PASSWORD);
+    return new Login(USERNAME, PASSWORD);
   }
 
   public static List<RoleRepresentation> createRoleRepresentations() {

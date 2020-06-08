@@ -29,6 +29,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.openknowledge.authentication.domain.KeycloakAdapter;
+import de.openknowledge.authentication.domain.user.Password;
+import de.openknowledge.authentication.domain.user.Username;
 
 @ExtendWith(MockitoExtension.class)
 public class KeycloakLoginServiceTest {
@@ -56,7 +58,7 @@ public class KeycloakLoginServiceTest {
 
   @BeforeEach
   void setup() {
-    login = new Login(Username.fromValue("test.user"), EmailAddress.fromValue("test.user@mail.de"), Password.fromValue("Test1234"));
+    login = new Login(Username.fromValue("test.user"), Password.fromValue("Test1234"));
     keycloakLoginService = new KeycloakLoginService(keycloakAdapter, "realmName", "clientId");
     response = createResponse();
   }

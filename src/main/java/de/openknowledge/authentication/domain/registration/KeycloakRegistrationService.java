@@ -44,9 +44,7 @@ import de.openknowledge.authentication.domain.KeycloakAdapter;
 import de.openknowledge.authentication.domain.RealmName;
 import de.openknowledge.authentication.domain.group.GroupId;
 import de.openknowledge.authentication.domain.group.GroupName;
-import de.openknowledge.authentication.domain.login.Login;
 import de.openknowledge.authentication.domain.role.RoleName;
-import de.openknowledge.authentication.domain.user.UserIdentifier;
 
 @ApplicationScoped
 public class KeycloakRegistrationService {
@@ -61,6 +59,8 @@ public class KeycloakRegistrationService {
 
   private RegistrationMode registrationMode;
 
+  private RegistrationRequirement registrationRequirement;
+
   @SuppressWarnings("unused")
   protected KeycloakRegistrationService() {
     // for framework
@@ -70,25 +70,27 @@ public class KeycloakRegistrationService {
   public KeycloakRegistrationService(KeycloakAdapter aKeycloakAdapter,
       @ConfigProperty(name = "keycloak.registration.realm") String aRealm,
       @ConfigProperty(name = "keycloak.registration.clientId") String aClientId,
-      @ConfigProperty(name = "keycloak.registration.mode") String aRegistrationMode) {
+      @ConfigProperty(name = "keycloak.registration.mode", defaultValue = "DEFAULT") String aRegistrationMode,
+      @ConfigProperty(name = "keycloak.registration.roleRequire", defaultValue = "DEFAULT") String aRegistrationRequirement) {
     keycloakAdapter = aKeycloakAdapter;
     realmName = RealmName.fromValue(aRealm);
     clientId = ClientId.fromValue(aClientId);
     registrationMode = RegistrationMode.fromValue(aRegistrationMode);
+    registrationRequirement = RegistrationRequirement.fromValue(aRegistrationRequirement);
   }
 
-  public boolean checkAlreadyExist(Login login) {
+  public boolean checkAlreadyExist(UserAccount userAccount) {
     UsersResource usersResource = keycloakAdapter.findUserResource(realmName);
-    List<UserRepresentation> existingUsersByUsername = usersResource.search(login.getUsername().getValue());
+    List<UserRepresentation> existingUsersByUsername = usersResource.search(userAccount.getUsername().getValue());
     LOG.info("List size by username is: {}",
         (existingUsersByUsername != null ? existingUsersByUsername.size() : "null"));
     return (existingUsersByUsername != null && !existingUsersByUsername.isEmpty());
   }
 
-  public UserIdentifier createUser(Login login, Attribute... attributes) {
-    UserRepresentation newUser = extractUser(login);
-    newUser.setCredentials(Collections.singletonList(extractCredential(login)));
-    newUser.setAttributes(extractAttributes(attributes));
+  public UserAccount createUser(UserAccount userAccount) {
+    UserRepresentation newUser = extractUser(userAccount);
+    newUser.setCredentials(Collections.singletonList(extractCredential(userAccount)));
+    newUser.setAttributes(extractAttributes(userAccount));
     Response response = keycloakAdapter.findUserResource(realmName).create(newUser);
     if (response.getStatus() != 201) {
       LOG.warn("Problem during create user {} on keycloak (response status {})", newUser.getUsername(), response.getStatus());
@@ -98,10 +100,14 @@ public class KeycloakRegistrationService {
     String userId = path.replaceAll(".*/([^/]+)$", "$1");
     UserIdentifier userIdentifier = UserIdentifier.fromValue(userId);
 
-    // client id as role to access client (because: required role extension)
-    joinRoles(userIdentifier, RoleName.fromValue(clientId.getValue()));
+    userAccount.setIdentifier(userIdentifier);
 
-    return userIdentifier;
+    if (RegistrationRequirement.ROLE.equals(registrationRequirement)) {
+      // client id as role to access client (because: required role extension)
+      joinRoles(userIdentifier, RoleName.fromValue(clientId.getValue()));
+    }
+
+    return userAccount;
   }
 
   public void updateMailVerification(UserIdentifier userIdentifier) {
@@ -143,10 +149,6 @@ public class KeycloakRegistrationService {
     userResource.roles().realmLevel().add(joiningRoles);
   }
 
-  public ClientId getClientId() {
-    return clientId;
-  }
-
   public List<RealmName> getRealms() {
     List<RealmName> realmNames = new ArrayList<>();
     List<RealmRepresentation> realms = keycloakAdapter.findAll();
@@ -164,10 +166,10 @@ public class KeycloakRegistrationService {
     return keycloakAdapter.decode(link);
   }
 
-  private UserRepresentation extractUser(Login login) {
+  private UserRepresentation extractUser(UserAccount userAccount) {
     UserRepresentation keycloakUser = new UserRepresentation();
-    keycloakUser.setUsername(login.getUsername().getValue());
-    keycloakUser.setEmail(login.getEmailAddress().getValue());
+    keycloakUser.setUsername(userAccount.getUsername().getValue());
+    keycloakUser.setEmail(userAccount.getEmailAddress().getValue());
     keycloakUser.setEnabled(true);
 
     if (RegistrationMode.DOUBLE_OPT_IN.equals(registrationMode)) {
@@ -179,17 +181,17 @@ public class KeycloakRegistrationService {
     return keycloakUser;
   }
 
-  private CredentialRepresentation extractCredential(Login login) {
+  private CredentialRepresentation extractCredential(UserAccount userAccount) {
     CredentialRepresentation credential = new CredentialRepresentation();
-    credential.setValue(login.getPassword().getValue());
+    credential.setValue(userAccount.getPassword().getValue());
     credential.setType(CredentialRepresentation.PASSWORD);
     credential.setTemporary(false);
     return credential;
   }
 
-  private Map<String, List<String>> extractAttributes(Attribute[] attributes) {
+  private Map<String, List<String>> extractAttributes(UserAccount userAccount) {
     Map<String, List<String>> userAttributeMap = new HashMap<>();
-    for (Attribute attribute : attributes) {
+    for (Attribute attribute : userAccount.getAttributes()) {
       if (userAttributeMap.containsKey(attribute.getKey())) {
         List<String> userAttributeList = userAttributeMap.get(attribute.getKey());
         userAttributeList.add(attribute.getValue());

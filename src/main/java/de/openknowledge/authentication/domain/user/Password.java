@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package de.openknowledge.authentication.domain.login;
+package de.openknowledge.authentication.domain.user;
 
 import static org.apache.commons.lang3.Validate.notBlank;
 

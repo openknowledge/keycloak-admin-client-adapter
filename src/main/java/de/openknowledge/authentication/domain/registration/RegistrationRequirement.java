@@ -13,26 +13,17 @@
  * See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package de.openknowledge.authentication.domain.login;
+package de.openknowledge.authentication.domain.registration;
 
-import static org.apache.commons.lang3.Validate.notBlank;
+public enum RegistrationRequirement {
+  DEFAULT, ROLE;
 
-import de.openknowledge.common.domain.AbstractStringValueObject;
-
-public class EmailAddress extends AbstractStringValueObject {
-
-  private EmailAddress(String value) {
-    super(value);
+  public static RegistrationRequirement fromValue(String value) {
+    for (RegistrationRequirement mode : values()) {
+      if (mode.name().equals(value.toUpperCase())) {
+        return mode;
+      }
+    }
+    throw new IllegalArgumentException("unsupported value: " + value);
   }
-
-  public EmailAddress() {
-    super();
-    // for framework
-  }
-
-  public static EmailAddress fromValue(String emailAddress) {
-    notBlank(emailAddress, "emailAddress may not be blank");
-    return new EmailAddress(emailAddress);
-  }
-
 }

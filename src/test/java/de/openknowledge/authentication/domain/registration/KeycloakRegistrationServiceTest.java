@@ -57,9 +57,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import de.openknowledge.authentication.domain.KeycloakAdapter;
 import de.openknowledge.authentication.domain.RealmName;
 import de.openknowledge.authentication.domain.group.GroupName;
-import de.openknowledge.authentication.domain.login.Login;
 import de.openknowledge.authentication.domain.role.RoleName;
-import de.openknowledge.authentication.domain.user.UserIdentifier;
 import de.openknowledge.common.domain.MockResponse;
 
 @ExtendWith(MockitoExtension.class)
@@ -85,7 +83,7 @@ public class KeycloakRegistrationServiceTest {
 
   private KeycloakRegistrationService service;
 
-  private Login login;
+  private UserAccount account;
 
   private Token token;
 
@@ -93,28 +91,29 @@ public class KeycloakRegistrationServiceTest {
 
   @BeforeEach
   void setup() {
-    login = new Login(USERNAME, MAIL_ADDRESS, PASSWORD);
+    account = new UserAccount(USERNAME, MAIL_ADDRESS, PASSWORD);
     token = new Token(USERNAME, USER_IDENTIFIER, MAIL_ADDRESS, ISSUER, 5, TimeUnit.MINUTES);
     roleRepresentations = createRoleRepresentations();
     service = new KeycloakRegistrationService(keycloakAdapter,
         REALM_NAME.getValue(),
         CLIENT_ID.getValue(),
-        RegistrationMode.DOUBLE_OPT_IN.name());
+        RegistrationMode.DOUBLE_OPT_IN.name(),
+        RegistrationRequirement.ROLE.name());
   }
 
   @Test
   void falseForCheckAlreadyExists() {
     doReturn(usersResource).when(keycloakAdapter).findUserResource(RealmName.fromValue("realmName"));
-    doReturn(new ArrayList<>()).when(usersResource).search(login.getUsername().getValue());
-    Boolean result = service.checkAlreadyExist(login);
+    doReturn(new ArrayList<>()).when(usersResource).search(account.getUsername().getValue());
+    Boolean result = service.checkAlreadyExist(account);
     assertThat(result).isFalse();
   }
 
   @Test
   void trueForCheckAlreadyExists() {
     doReturn(usersResource).when(keycloakAdapter).findUserResource(RealmName.fromValue("realmName"));
-    doReturn(Collections.singletonList(new UserRepresentation())).when(usersResource).search(login.getUsername().getValue());
-    Boolean result = service.checkAlreadyExist(login);
+    doReturn(Collections.singletonList(new UserRepresentation())).when(usersResource).search(account.getUsername().getValue());
+    Boolean result = service.checkAlreadyExist(account);
     assertThat(result).isTrue();
   }
 
@@ -130,14 +129,14 @@ public class KeycloakRegistrationServiceTest {
     doReturn(roleMappingResource).when(userResource).roles();
     doReturn(roleScopeResource).when(roleMappingResource).realmLevel();
     doNothing().when(roleScopeResource).add(eq(roleRepresentations));
-    UserIdentifier response = service.createUser(login);
-    assertThat(response).isEqualTo(USER_IDENTIFIER);
+    UserAccount response = service.createUser(account);
+    assertThat(response.getIdentifier()).isEqualTo(USER_IDENTIFIER);
   }
 
   @Test
   void returnValidOnCreateUserWithoutDoubleOptIn() {
-    KeycloakRegistrationService noDoubleOptInService =
-        new KeycloakRegistrationService(keycloakAdapter, REALM_NAME.getValue(), CLIENT_ID.getValue(), RegistrationMode.DEFAULT.name());
+    KeycloakRegistrationService noDoubleOptInService = new KeycloakRegistrationService(keycloakAdapter,
+        REALM_NAME.getValue(), CLIENT_ID.getValue(), RegistrationMode.DEFAULT.name(), RegistrationRequirement.ROLE.name());
     // createUser
     doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
     doReturn(new MockResponse(201, USER_IDENTIFIER)).when(usersResource).create(any(UserRepresentation.class));
@@ -148,15 +147,15 @@ public class KeycloakRegistrationServiceTest {
     doReturn(roleMappingResource).when(userResource).roles();
     doReturn(roleScopeResource).when(roleMappingResource).realmLevel();
     doNothing().when(roleScopeResource).add(eq(roleRepresentations));
-    UserIdentifier response = noDoubleOptInService.createUser(login);
-    assertThat(response).isEqualTo(USER_IDENTIFIER);
+    UserAccount response = noDoubleOptInService.createUser(account);
+    assertThat(response.getIdentifier()).isEqualTo(USER_IDENTIFIER);
   }
 
   @Test
   void returnInvalidOnCreateUser() {
     doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
     doReturn(new MockResponse(401, USER_IDENTIFIER)).when(usersResource).create(any(UserRepresentation.class));
-    UserIdentifier response = service.createUser(login);
+    UserAccount response = service.createUser(account);
     assertThat(response).isNull();
   }
 
