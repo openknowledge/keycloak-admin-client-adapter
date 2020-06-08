@@ -15,8 +15,7 @@ jobs:
           java-version: 11
       - name: Configure Git signing
           run: |
-            GIT_EMAIL=tim.debuhr@ms.ingenico.com
-            echo "${GPG_KEY}" |  gpg --dearmor | gpg --batch --yes --import -
+            echo "${GPG_KEY}" | gpg --dearmor | gpg --batch --yes --import -
           env:
             GPG_KEY: ${{ secrets.GPG_KEY }}
       - name: Branch name
