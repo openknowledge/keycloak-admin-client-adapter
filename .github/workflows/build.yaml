@@ -54,7 +54,7 @@ jobs:
       - if: github.ref != 'master'
         name: Verify artifact
         run: |
-          echo "run mvn verify
+          echo "run mvn verify"
           mvn verify
         env:
           GPG_TTY: $(tty)
