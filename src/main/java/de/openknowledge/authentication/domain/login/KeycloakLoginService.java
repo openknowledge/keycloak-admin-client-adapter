@@ -25,11 +25,11 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.core.Form;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.keycloak.representations.AccessTokenResponse;
 
-import de.openknowledge.authentication.domain.KeycloakAdapter;
 import de.openknowledge.authentication.domain.ClientId;
+import de.openknowledge.authentication.domain.KeycloakAdapter;
+import de.openknowledge.authentication.domain.KeycloakServiceConfiguration;
 import de.openknowledge.authentication.domain.RealmName;
 
 @ApplicationScoped
@@ -48,11 +48,10 @@ public class KeycloakLoginService {
 
   @Inject
   public KeycloakLoginService(KeycloakAdapter aKeycloakAdapter,
-      @ConfigProperty(name = "keycloak.login.realm") String aRealmName,
-      @ConfigProperty(name = "keycloak.login.clientId") String aClientId) {
+      KeycloakServiceConfiguration aServiceConfiguration) {
     keycloakAdapter = aKeycloakAdapter;
-    realmName = RealmName.fromValue(aRealmName);
-    clientId = ClientId.fromValue(aClientId);
+    realmName = RealmName.fromValue(aServiceConfiguration.getRealm());
+    clientId = ClientId.fromValue(aServiceConfiguration.getClientId());
   }
 
   public LoginToken login(Login login) {

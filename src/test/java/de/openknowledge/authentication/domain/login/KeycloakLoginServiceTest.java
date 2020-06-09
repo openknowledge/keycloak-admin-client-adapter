@@ -20,6 +20,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+import static de.openknowledge.common.domain.ObjectMother.CLIENT_ID;
+import static de.openknowledge.common.domain.ObjectMother.REALM_NAME;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +32,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.openknowledge.authentication.domain.KeycloakAdapter;
+import de.openknowledge.authentication.domain.KeycloakServiceConfiguration;
 import de.openknowledge.authentication.domain.Password;
 import de.openknowledge.authentication.domain.Username;
 
@@ -62,7 +66,8 @@ public class KeycloakLoginServiceTest {
   void setup() {
     login = new Login(Username.fromValue("test.user"), Password.fromValue("Test1234"));
     refreshToken = RefreshToken.fromValue("ABC-123");
-    keycloakLoginService = new KeycloakLoginService(keycloakAdapter, "realmName", "clientId");
+    KeycloakServiceConfiguration serviceConfiguration = new KeycloakServiceConfiguration(REALM_NAME.getValue(), CLIENT_ID.getValue());
+    keycloakLoginService = new KeycloakLoginService(keycloakAdapter, serviceConfiguration);
     response = createResponse();
   }
 

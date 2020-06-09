@@ -15,45 +15,37 @@
  */
 package de.openknowledge.authentication.domain.registration;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import static org.apache.commons.lang3.Validate.notNull;
+
+import java.util.concurrent.TimeUnit;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.ws.rs.core.Response;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.keycloak.admin.client.resource.GroupsResource;
-import org.keycloak.admin.client.resource.RolesResource;
-import org.keycloak.admin.client.resource.UserResource;
-import org.keycloak.admin.client.resource.UsersResource;
-import org.keycloak.representations.idm.CredentialRepresentation;
-import org.keycloak.representations.idm.GroupRepresentation;
-import org.keycloak.representations.idm.RealmRepresentation;
-import org.keycloak.representations.idm.RoleRepresentation;
-import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.openknowledge.authentication.domain.ClientId;
-import de.openknowledge.authentication.domain.KeycloakAdapter;
-import de.openknowledge.authentication.domain.RealmName;
-import de.openknowledge.authentication.domain.group.GroupId;
-import de.openknowledge.authentication.domain.group.GroupName;
+import de.openknowledge.authentication.domain.KeycloakServiceConfiguration;
 import de.openknowledge.authentication.domain.role.RoleName;
+import de.openknowledge.authentication.domain.token.KeycloakTokenService;
+import de.openknowledge.authentication.domain.token.Token;
+import de.openknowledge.authentication.domain.token.VerificationLink;
+import de.openknowledge.authentication.domain.user.EmailVerifiedMode;
+import de.openknowledge.authentication.domain.user.KeycloakUserService;
+import de.openknowledge.authentication.domain.user.UserAccount;
+import de.openknowledge.authentication.domain.user.UserCreationFailedException;
+import de.openknowledge.authentication.domain.user.UserIdentifier;
 
 @ApplicationScoped
 public class KeycloakRegistrationService {
 
   private static final Logger LOG = LoggerFactory.getLogger(KeycloakRegistrationService.class);
 
-  private KeycloakAdapter keycloakAdapter;
+  private KeycloakUserService keycloakUserService;
 
-  private RealmName realmName;
+  private KeycloakTokenService keycloakTokenService;
 
   private ClientId clientId;
 
@@ -61,148 +53,93 @@ public class KeycloakRegistrationService {
 
   private RegistrationRequirement registrationRequirement;
 
+  private Integer tokenLifeTime;
+
+  private TimeUnit timeUnit;
+
   @SuppressWarnings("unused")
   protected KeycloakRegistrationService() {
     // for framework
   }
 
   @Inject
-  public KeycloakRegistrationService(KeycloakAdapter aKeycloakAdapter,
-      @ConfigProperty(name = "keycloak.registration.realm") String aRealm,
-      @ConfigProperty(name = "keycloak.registration.clientId") String aClientId,
+  public KeycloakRegistrationService(KeycloakServiceConfiguration aServiceConfiguration,
+      KeycloakUserService aKeycloakUserService,
+      KeycloakTokenService aKeycloakTokenService,
       @ConfigProperty(name = "keycloak.registration.mode", defaultValue = "DEFAULT") String aRegistrationMode,
-      @ConfigProperty(name = "keycloak.registration.roleRequire", defaultValue = "DEFAULT") String aRegistrationRequirement) {
-    keycloakAdapter = aKeycloakAdapter;
-    realmName = RealmName.fromValue(aRealm);
-    clientId = ClientId.fromValue(aClientId);
+      @ConfigProperty(name = "keycloak.registration.roleRequire", defaultValue = "DEFAULT") String aRegistrationRequirement,
+      @ConfigProperty(name = "keycloak.registration.tokenLifeTime", defaultValue = "5") String aTokenLifeTime,
+      @ConfigProperty(name = "keycloak.registration.tokenTimeUnit", defaultValue = "MINUTE") String aTimeUnit) {
+    keycloakUserService = aKeycloakUserService;
+    keycloakTokenService = aKeycloakTokenService;
+    clientId = ClientId.fromValue(aServiceConfiguration.getClientId());
     registrationMode = RegistrationMode.fromValue(aRegistrationMode);
     registrationRequirement = RegistrationRequirement.fromValue(aRegistrationRequirement);
+    tokenLifeTime = Integer.parseInt(aTokenLifeTime);
+    timeUnit = TimeUnit.valueOf(aTimeUnit);
   }
 
-  public boolean checkAlreadyExist(UserAccount userAccount) {
-    UsersResource usersResource = keycloakAdapter.findUserResource(realmName);
-    List<UserRepresentation> existingUsersByUsername = usersResource.search(userAccount.getUsername().getValue());
-    LOG.info("List size by username is: {}",
-        (existingUsersByUsername != null ? existingUsersByUsername.size() : "null"));
-    return (existingUsersByUsername != null && !existingUsersByUsername.isEmpty());
-  }
+  public UserAccount register(UserAccount userAccount) throws RegistrationFailedException {
+    notNull(userAccount, "userAccount may not be null");
 
-  public UserAccount createUser(UserAccount userAccount) {
-    UserRepresentation newUser = extractUser(userAccount);
-    newUser.setCredentials(Collections.singletonList(extractCredential(userAccount)));
-    newUser.setAttributes(extractAttributes(userAccount));
-    Response response = keycloakAdapter.findUserResource(realmName).create(newUser);
-    if (response.getStatus() != 201) {
-      LOG.warn("Problem during create user {} on keycloak (response status {})", newUser.getUsername(), response.getStatus());
-      return null;
+    // check user already exists
+    if (keycloakUserService.checkAlreadyExist(userAccount)) {
+      throw new RegistrationFailedException(userAccount.getUsername().getValue());
     }
-    String path = response.getLocation().getPath();
-    String userId = path.replaceAll(".*/([^/]+)$", "$1");
-    UserIdentifier userIdentifier = UserIdentifier.fromValue(userId);
 
-    userAccount.setIdentifier(userIdentifier);
+    // create new user
+    UserAccount newUserAccount;
+    try {
+      EmailVerifiedMode emailVerifiedMode = convert(registrationMode);
+      newUserAccount = keycloakUserService.createUser(userAccount, emailVerifiedMode);
+    } catch (UserCreationFailedException e) {
+      throw new RegistrationFailedException(e);
+    }
 
+    // if the clientId as realm role is required to access client
     if (RegistrationRequirement.ROLE.equals(registrationRequirement)) {
       // client id as role to access client (because: required role extension)
-      joinRoles(userIdentifier, RoleName.fromValue(clientId.getValue()));
+      keycloakUserService.joinRoles(newUserAccount.getIdentifier(), RoleName.fromValue(clientId.getValue()));
     }
 
     return userAccount;
   }
 
-  public void updateMailVerification(UserIdentifier userIdentifier) {
-    UserResource userResource = keycloakAdapter.findUserResource(realmName).get(userIdentifier.getValue());
-    UserRepresentation user = userResource.toRepresentation();
-    user.setEmailVerified(true);
-    userResource.update(user);
-  }
+  public UserIdentifier verifyEmailAddress(VerificationLink link, Issuer issuer) throws InvalidTokenException {
+    // convert verificationLink to token
+    Token token = keycloakTokenService.decode(link);
 
-  public void joinGroups(UserIdentifier userIdentifier, GroupName... groupNames) {
-    GroupsResource resource = keycloakAdapter.findGroupResource(realmName);
-    List<GroupId> joiningGroups = new ArrayList<>();
-    for (GroupName groupName : groupNames) {
-      List<GroupRepresentation> groups = resource.groups(groupName.getValue(), 0, 1);
-      if (groups == null || groups.isEmpty()) {
-        LOG.warn("Group (name='{}') not found", groupName.getValue());
-      } else {
-        joiningGroups.addAll(groups.stream().map(group -> GroupId.fromValue(group.getId())).collect(Collectors.toList()));
-      }
-    }
-    UserResource userResource = keycloakAdapter.findUserResource(realmName).get(userIdentifier.getValue());
-    for (GroupId groupId : joiningGroups) {
-      userResource.joinGroup(groupId.getValue());
-    }
-  }
-
-  public void joinRoles(UserIdentifier userIdentifier, RoleName... roleNames) {
-    RolesResource resource = keycloakAdapter.findRoleResource(realmName);
-    List<RoleRepresentation> joiningRoles = new ArrayList<>();
-    for (RoleName roleName : roleNames) {
-      List<RoleRepresentation> roles = resource.list(roleName.getValue(), 0, 1);
-      if (roles == null || roles.isEmpty()) {
-        LOG.warn("Role (name='{}') not found", roleName.getValue());
-      } else {
-        joiningRoles.addAll(roles);
-      }
-    }
-    UserResource userResource = keycloakAdapter.findUserResource(realmName).get(userIdentifier.getValue());
-    userResource.roles().realmLevel().add(joiningRoles);
-  }
-
-  public List<RealmName> getRealms() {
-    List<RealmName> realmNames = new ArrayList<>();
-    List<RealmRepresentation> realms = keycloakAdapter.findAll();
-    if (!realms.isEmpty()) {
-      realmNames = realms.stream().map(RealmRepresentation::getRealm).map(RealmName::fromValue).collect(Collectors.toList());
-    }
-    return realmNames;
-  }
-
-  public VerificationLink encodeToken(Token token) {
-    return keycloakAdapter.encode(token);
-  }
-
-  public Token decodeToken(VerificationLink link) {
-    return keycloakAdapter.decode(link);
-  }
-
-  private UserRepresentation extractUser(UserAccount userAccount) {
-    UserRepresentation keycloakUser = new UserRepresentation();
-    keycloakUser.setUsername(userAccount.getUsername().getValue());
-    keycloakUser.setEmail(userAccount.getEmailAddress().getValue());
-    keycloakUser.setEnabled(true);
-
-    if (RegistrationMode.DOUBLE_OPT_IN.equals(registrationMode)) {
-      keycloakUser.setEmailVerified(false);
-    } else if (RegistrationMode.DEFAULT.equals(registrationMode)) {
-      keycloakUser.setEmailVerified(true);
+    // validate token and create detailed error message if invalid
+    if (!token.isValid(issuer)) {
+      throw new InvalidTokenException(token, issuer);
     }
 
-    return keycloakUser;
+    // convert to customerNumber and load account
+    UserIdentifier userIdentifier = token.asUserIdentifier();
+
+    keycloakUserService.updateMailVerification(userIdentifier);
+
+    return userIdentifier;
   }
 
-  private CredentialRepresentation extractCredential(UserAccount userAccount) {
-    CredentialRepresentation credential = new CredentialRepresentation();
-    credential.setValue(userAccount.getPassword().getValue());
-    credential.setType(CredentialRepresentation.PASSWORD);
-    credential.setTemporary(false);
-    return credential;
+  public VerificationLink createVerificationLink(UserAccount userAccount, Issuer issuer) {
+    Token token = userAccount.asToken(issuer, tokenLifeTime, timeUnit);
+    return keycloakTokenService.encode(token);
   }
 
-  private Map<String, List<String>> extractAttributes(UserAccount userAccount) {
-    Map<String, List<String>> userAttributeMap = new HashMap<>();
-    for (Attribute attribute : userAccount.getAttributes()) {
-      if (userAttributeMap.containsKey(attribute.getKey())) {
-        List<String> userAttributeList = userAttributeMap.get(attribute.getKey());
-        userAttributeList.add(attribute.getValue());
-        userAttributeMap.put(attribute.getKey(), userAttributeList);
-      } else {
-        List<String> userAttributeList = new ArrayList<>();
-        userAttributeList.add(attribute.getValue());
-        userAttributeMap.put(attribute.getKey(), userAttributeList);
-      }
+  public KeycloakUserService getKeycloakUserService() {
+    return keycloakUserService;
+  }
+
+  private EmailVerifiedMode convert(RegistrationMode registrationMode) {
+    switch (registrationMode) {
+      case DOUBLE_OPT_IN:
+        return EmailVerifiedMode.REQUIRED;
+      case DEFAULT:
+        return EmailVerifiedMode.DEFAULT;
+      default:
+        throw new IllegalArgumentException("unsupported RegistrationMode " + registrationMode);
     }
-    return userAttributeMap;
   }
 
 }

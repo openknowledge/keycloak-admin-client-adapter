@@ -1,12 +1,16 @@
-package de.openknowledge.authentication.domain.registration;
+package de.openknowledge.authentication.domain.user;
 
 import static org.apache.commons.lang3.Validate.notNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import de.openknowledge.authentication.domain.Password;
 import de.openknowledge.authentication.domain.Username;
+import de.openknowledge.authentication.domain.registration.Issuer;
+import de.openknowledge.authentication.domain.token.Token;
 
 public class UserAccount {
 
@@ -42,6 +46,18 @@ public class UserAccount {
     attributes = new ArrayList<>();
   }
 
+  public Token asToken(Issuer issuer) {
+    return asToken(issuer, 5, TimeUnit.MINUTES);
+  }
+
+  public Token asToken(Issuer issuer, Integer timeToLive) {
+    return asToken(issuer, timeToLive, TimeUnit.MINUTES);
+  }
+
+  public Token asToken(Issuer issuer, Integer timeToLive, TimeUnit timeUnit) {
+    return new Token(username, identifier, emailAddress, issuer, timeToLive, timeUnit);
+  }
+
   public UserIdentifier getIdentifier() {
     return identifier;
   }
@@ -71,4 +87,35 @@ public class UserAccount {
     attributes.add(theAttribute);
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof UserAccount)) {
+      return false;
+    }
+    UserAccount that = (UserAccount)o;
+    return Objects.equals(getIdentifier(), that.getIdentifier()) &&
+        Objects.equals(getUsername(), that.getUsername()) &&
+        Objects.equals(getPassword(), that.getPassword()) &&
+        Objects.equals(getEmailAddress(), that.getEmailAddress()) &&
+        Objects.equals(getAttributes(), that.getAttributes());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getIdentifier(), getUsername(), getPassword(), getEmailAddress(), getAttributes());
+  }
+
+  @Override
+  public String toString() {
+    return "UserAccount{"
+        + "identifier=" + identifier
+        + ", username=" + username
+        + ", password=******"
+        + ", emailAddress=" + emailAddress
+        + ", attributes=" + attributes
+        + "}";
+  }
 }

@@ -37,10 +37,10 @@ public class KeycloakKeyConfiguration {
 
   @Inject
   public KeycloakKeyConfiguration(
-      @ConfigProperty(name = "keycloak.keyPair.filename.publicKey") String aFilenamePublicKey,
-      @ConfigProperty(name = "keycloak.keyPair.filename.privateKey") String aFilenamePrivateKey,
+      @ConfigProperty(name = "keycloak.keyPair.filename.publicKey", defaultValue = "public.key") String aFilenamePublicKey,
+      @ConfigProperty(name = "keycloak.keyPair.filename.privateKey", defaultValue = "private.key") String aFilenamePrivateKey,
       @ConfigProperty(name = "keycloak.keyPair.tokenSecret") String aTokenSecret,
-      @ConfigProperty(name = "keycloak.keyPair.algorithm") String anAlgorithm) {
+      @ConfigProperty(name = "keycloak.keyPair.algorithm", defaultValue = "RSA") String anAlgorithm) {
     filenamePublicKey = aFilenamePublicKey;
     filenamePrivateKey = aFilenamePrivateKey;
     tokenSecret = aTokenSecret;

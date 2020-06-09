@@ -31,7 +31,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 
-import de.openknowledge.authentication.domain.registration.UserIdentifier;
+import de.openknowledge.authentication.domain.user.UserIdentifier;
 
 public class MockResponse extends Response {
 

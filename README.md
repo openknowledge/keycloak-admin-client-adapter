@@ -28,16 +28,14 @@ keycloak.keyPair.tokenSecret=<KEYCLOAK_PUBLIC_TOKEN_SECRET: example = bg601f81f7
 keycloak.keyPair.algorithm=<KEYCLOAK_KEY_ALGORITHM: example = RSA>
 ```
 
-#### Keycloak login service configuration {KeycloakLoginService.java}
+#### Keycloak service configuration {KeycloakServiceConfiguration.java}
 ```
-keycloak.login.realm=<KEYCLOAK_REALM>
-keycloak.login.clientId=<KEYCLOAK_REALM_CLIENT_ID>
+keycloak.serivce.realm=<KEYCLOAK_REALM>
+keycloak.service.clientId=<KEYCLOAK_REALM_CLIENT_ID>
 ```
 
 #### Keycloak registration service configuration {KeycloakRegistrationService.java}
 ```
-keycloak.registration.realm=<KEYCLOAK_REALM>
-keycloak.registration.clientId=<KEYCLOAK_REALM_CLIENT_ID>
 keycloak.registration.mode=<KEYCLOAK_REGISTRATION_MODE: example = DOUBLE_OPT_IN>
 keycloak.registration.roleRequire=<KEYCLOAK_REGISTRATION_ROLE_REQUIRED: example = true>
 ```

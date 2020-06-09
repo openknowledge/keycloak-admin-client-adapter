@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package de.openknowledge.authentication.domain.registration;
+package de.openknowledge.authentication.domain.user;
 
 import java.util.Objects;
 

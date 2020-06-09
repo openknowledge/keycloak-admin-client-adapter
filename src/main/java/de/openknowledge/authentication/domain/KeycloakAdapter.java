@@ -15,10 +15,8 @@
  */
 package de.openknowledge.authentication.domain;
 
-import java.security.KeyPair;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
@@ -34,10 +32,6 @@ import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.admin.client.token.TokenService;
 import org.keycloak.representations.idm.RealmRepresentation;
 
-import de.openknowledge.authentication.domain.registration.Token;
-import de.openknowledge.authentication.domain.registration.TokenSecret;
-import de.openknowledge.authentication.domain.registration.VerificationLink;
-
 @ApplicationScoped
 public class KeycloakAdapter {
 
@@ -45,19 +39,12 @@ public class KeycloakAdapter {
 
   private TokenService tokenService;
 
-  private KeycloakKeyConfiguration keyConfiguration;
-
-  private KeyPair keyPair;
-
-  private TokenSecret tokenSecret;
-
   protected KeycloakAdapter() {
     // for framework
   }
 
   @Inject
-  public KeycloakAdapter(KeycloakAdapterConfiguration adapterConfig,
-      KeycloakKeyConfiguration keyConfig) {
+  public KeycloakAdapter(KeycloakAdapterConfiguration adapterConfig) {
     ResteasyClient restClient = new ResteasyClientBuilder().connectionPoolSize(adapterConfig.getConnectionPoolSize()).build();
     keycloak = KeycloakBuilder.builder()
         .serverUrl(adapterConfig.getServerUrl())
@@ -69,13 +56,6 @@ public class KeycloakAdapter {
         .resteasyClient(restClient)
         .build();
     tokenService = restClient.target(adapterConfig.getServerUrl()).proxy(TokenService.class);
-    keyConfiguration = keyConfig;
-  }
-
-  @PostConstruct
-  public void init() {
-    keyPair = KeycloakKeyService.readKeyPair(keyConfiguration);
-    tokenSecret = TokenSecret.fromValue(keyConfiguration.getTokenSecret());
   }
 
   public List<RealmRepresentation> findAll() {
@@ -96,14 +76,6 @@ public class KeycloakAdapter {
   public RolesResource findRoleResource(RealmName realmName) {
     RealmResource realmResource = keycloak.realm(realmName.getValue());
     return realmResource.roles();
-  }
-
-  public VerificationLink encode(Token token) {
-    return KeycloakTokenService.encode(token, tokenSecret, keyPair.getPublic());
-  }
-
-  public Token decode(VerificationLink link) {
-    return KeycloakTokenService.decode(link, tokenSecret, keyPair.getPrivate());
   }
 
   public TokenService getTokenService() {

@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package de.openknowledge.authentication.domain;
+package de.openknowledge.authentication.domain.token;
 
 import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
+import javax.annotation.PostConstruct;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import javax.json.bind.JsonbBuilder;
 
 import org.keycloak.jose.jwe.JWE;
@@ -35,22 +39,44 @@ import org.keycloak.jose.jwe.enc.JWEEncryptionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.openknowledge.authentication.domain.registration.Token;
-import de.openknowledge.authentication.domain.registration.TokenSecret;
-import de.openknowledge.authentication.domain.registration.VerificationLink;
+import de.openknowledge.authentication.domain.KeycloakKeyConfiguration;
+import de.openknowledge.authentication.domain.KeycloakKeyService;
 
+@ApplicationScoped
 public class KeycloakTokenService {
 
   private static final Logger LOG = LoggerFactory.getLogger(KeycloakTokenService.class);
 
-  public static VerificationLink encode(Token token, TokenSecret tokenSecret, PublicKey encryptionKey) {
+  private KeycloakKeyConfiguration keyConfiguration;
+
+  private KeyPair keyPair;
+
+  private TokenSecret tokenSecret;
+
+  @SuppressWarnings("unused")
+  protected KeycloakTokenService() {
+    // for framework
+  }
+
+  @Inject
+  public KeycloakTokenService(KeycloakKeyConfiguration aKeyConfiguration) {
+    keyConfiguration = aKeyConfiguration;
+  }
+
+  @PostConstruct
+  public void init() {
+    keyPair = KeycloakKeyService.readKeyPair(keyConfiguration);
+    tokenSecret = TokenSecret.fromValue(keyConfiguration.getTokenSecret());
+  }
+
+  public VerificationLink encode(Token token) {
     try {
       String payload = JsonbBuilder.create().toJson(token);
-      LOG.info(payload);
-      JWE jwe = jwtEncode(tokenSecret, encryptionKey);
+      LOG.debug("payload: {}", payload);
+      JWE jwe = jwtEncode(tokenSecret, keyPair.getPublic());
       jwe.content(payload.getBytes(StandardCharsets.UTF_8));
       String encodedPayload = jwe.encodeJwe(getAlgorithmProvider(), getEncryptionProvider());
-      LOG.debug(encodedPayload);
+      LOG.debug("encoded payload: {}", encodedPayload);
       return VerificationLink.fromValue(encodedPayload);
     } catch (JWEException e) {
       LOG.error("problem during encode JWT: {}", e.getMessage(), e);
@@ -58,12 +84,13 @@ public class KeycloakTokenService {
     }
   }
 
-  public static Token decode(VerificationLink link, TokenSecret tokenSecret, PrivateKey decryptionKey) {
+  public Token decode(VerificationLink link) {
     try {
-      JWE jwe = jwtDecoder(tokenSecret, decryptionKey);
+      LOG.debug("payload: {}", link.getValue());
+      JWE jwe = jwtDecoder(tokenSecret, keyPair.getPrivate());
       jwe.verifyAndDecodeJwe(link.getValue(), getAlgorithmProvider(), getEncryptionProvider());
       String decodedPayload = new String(jwe.getContent(), StandardCharsets.UTF_8);
-      LOG.debug(decodedPayload);
+      LOG.debug("decoded payload: {}", decodedPayload);
       return JsonbBuilder.create().fromJson(decodedPayload, Token.class);
     } catch (JWEException e) {
       LOG.error("problem during decode JWT: {}", e.getMessage(), e);
@@ -71,7 +98,7 @@ public class KeycloakTokenService {
     }
   }
 
-  private static JWE jwtEncode(TokenSecret tokenSecret, PublicKey encryptionKey) {
+  private JWE jwtEncode(TokenSecret tokenSecret, PublicKey encryptionKey) {
     JWEHeader jweHeader = new JWEHeader(JWEConstants.A256CBC_HS512, JWEConstants.A256CBC_HS512, null);
     JWE jwe = new JWE();
     jwe.header(jweHeader);
@@ -80,25 +107,25 @@ public class KeycloakTokenService {
     return jwe;
   }
 
-  private static JWE jwtDecoder(TokenSecret tokenSecret, PrivateKey decryptionKey) {
+  private JWE jwtDecoder(TokenSecret tokenSecret, PrivateKey decryptionKey) {
     JWE jwe = new JWE();
     jwe.getKeyStorage().setDecryptionKey(decryptionKey);
     enrichKeyStorage(jwe, tokenSecret);
     return jwe;
   }
 
-  private static void enrichKeyStorage(JWE jwe, TokenSecret tokenSecret) {
+  private void enrichKeyStorage(JWE jwe, TokenSecret tokenSecret) {
     SecretKey aesKey = new SecretKeySpec(tokenSecret.asByteArray(), "AES");
     SecretKey hmacKey = new SecretKeySpec(tokenSecret.asByteArray(), "HMACSHA2");
     jwe.getKeyStorage().setCEKKey(aesKey, JWEKeyStorage.KeyUse.ENCRYPTION);
     jwe.getKeyStorage().setCEKKey(hmacKey, JWEKeyStorage.KeyUse.SIGNATURE);
   }
 
-  private static JWEAlgorithmProvider getAlgorithmProvider() {
+  private JWEAlgorithmProvider getAlgorithmProvider() {
     return new RsaKeyEncryptionJWEAlgorithmProvider("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
   }
 
-  private static JWEEncryptionProvider getEncryptionProvider() {
+  private JWEEncryptionProvider getEncryptionProvider() {
     return new AesCbcHmacShaEncryptionProvider.Aes256CbcHmacSha512Provider();
   }
 

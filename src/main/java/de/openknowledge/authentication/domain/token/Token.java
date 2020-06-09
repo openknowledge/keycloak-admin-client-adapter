@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package de.openknowledge.authentication.domain.registration;
+package de.openknowledge.authentication.domain.token;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -25,6 +25,10 @@ import javax.json.bind.annotation.JsonbTransient;
 import org.keycloak.common.util.Time;
 
 import de.openknowledge.authentication.domain.Username;
+import de.openknowledge.authentication.domain.registration.Issuer;
+import de.openknowledge.authentication.domain.registration.RegistrationMode;
+import de.openknowledge.authentication.domain.user.EmailAddress;
+import de.openknowledge.authentication.domain.user.UserIdentifier;
 
 public class Token {
 
@@ -55,7 +59,7 @@ public class Token {
       UserIdentifier anUserIdentifier,
       EmailAddress anEmailAddress,
       Issuer anIssuer,
-      Integer timeToLive,
+      Integer timeToLife,
       TimeUnit timeUnit) {
     setTokenId(UUID.randomUUID().toString());
     setUserIdentifier(anUserIdentifier.getValue());
@@ -65,7 +69,7 @@ public class Token {
     setType(RegistrationMode.DOUBLE_OPT_IN.name());
     setIssuedAt(Time.currentTime());
     setNotBefore(issuedAt);
-    setExpiration(calculateExpiration(issuedAt, timeToLive, timeUnit));
+    setExpiration(calculateExpiration(issuedAt, timeToLife, timeUnit));
   }
 
   @JsonbTransient
