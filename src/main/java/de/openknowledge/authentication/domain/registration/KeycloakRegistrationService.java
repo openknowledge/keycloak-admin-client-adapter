@@ -45,6 +45,7 @@ import de.openknowledge.authentication.domain.RealmName;
 import de.openknowledge.authentication.domain.group.GroupId;
 import de.openknowledge.authentication.domain.group.GroupName;
 import de.openknowledge.authentication.domain.role.RoleName;
+import de.openknowledge.authentication.domain.verification.VerificationService;
 
 @ApplicationScoped
 public class KeycloakRegistrationService {
@@ -52,6 +53,8 @@ public class KeycloakRegistrationService {
   private static final Logger LOG = LoggerFactory.getLogger(KeycloakRegistrationService.class);
 
   private KeycloakAdapter keycloakAdapter;
+
+  private VerificationService verificationService;
 
   private RealmName realmName;
 
@@ -68,11 +71,13 @@ public class KeycloakRegistrationService {
 
   @Inject
   public KeycloakRegistrationService(KeycloakAdapter aKeycloakAdapter,
+      VerificationService aVerificationService,
       @ConfigProperty(name = "keycloak.registration.realm") String aRealm,
       @ConfigProperty(name = "keycloak.registration.clientId") String aClientId,
       @ConfigProperty(name = "keycloak.registration.mode", defaultValue = "DEFAULT") String aRegistrationMode,
       @ConfigProperty(name = "keycloak.registration.roleRequire", defaultValue = "DEFAULT") String aRegistrationRequirement) {
     keycloakAdapter = aKeycloakAdapter;
+    verificationService = aVerificationService;
     realmName = RealmName.fromValue(aRealm);
     clientId = ClientId.fromValue(aClientId);
     registrationMode = RegistrationMode.fromValue(aRegistrationMode);
@@ -159,11 +164,11 @@ public class KeycloakRegistrationService {
   }
 
   public VerificationLink encodeToken(Token token) {
-    return keycloakAdapter.encode(token);
+    return verificationService.encode(token);
   }
 
   public Token decodeToken(VerificationLink link) {
-    return keycloakAdapter.decode(link);
+    return verificationService.decode(link);
   }
 
   private UserRepresentation extractUser(UserAccount userAccount) {

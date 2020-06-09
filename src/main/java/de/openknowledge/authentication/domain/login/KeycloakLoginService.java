@@ -28,8 +28,8 @@ import javax.ws.rs.core.Form;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.keycloak.representations.AccessTokenResponse;
 
-import de.openknowledge.authentication.domain.KeycloakAdapter;
 import de.openknowledge.authentication.domain.ClientId;
+import de.openknowledge.authentication.domain.KeycloakAdapter;
 import de.openknowledge.authentication.domain.RealmName;
 
 @ApplicationScoped

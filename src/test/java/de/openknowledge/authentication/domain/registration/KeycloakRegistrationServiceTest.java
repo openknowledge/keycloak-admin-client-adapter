@@ -58,6 +58,7 @@ import de.openknowledge.authentication.domain.KeycloakAdapter;
 import de.openknowledge.authentication.domain.RealmName;
 import de.openknowledge.authentication.domain.group.GroupName;
 import de.openknowledge.authentication.domain.role.RoleName;
+import de.openknowledge.authentication.domain.verification.VerificationService;
 import de.openknowledge.common.domain.MockResponse;
 
 @ExtendWith(MockitoExtension.class)
@@ -65,6 +66,9 @@ public class KeycloakRegistrationServiceTest {
 
   @Mock
   private KeycloakAdapter keycloakAdapter;
+
+  @Mock
+  private VerificationService verificationService;
 
   @Mock
   private UsersResource usersResource;
@@ -95,6 +99,7 @@ public class KeycloakRegistrationServiceTest {
     token = new Token(USERNAME, USER_IDENTIFIER, MAIL_ADDRESS, ISSUER, 5, TimeUnit.MINUTES);
     roleRepresentations = createRoleRepresentations();
     service = new KeycloakRegistrationService(keycloakAdapter,
+        verificationService,
         REALM_NAME.getValue(),
         CLIENT_ID.getValue(),
         RegistrationMode.DOUBLE_OPT_IN.name(),
@@ -135,7 +140,7 @@ public class KeycloakRegistrationServiceTest {
 
   @Test
   void returnValidOnCreateUserWithoutDoubleOptIn() {
-    KeycloakRegistrationService noDoubleOptInService = new KeycloakRegistrationService(keycloakAdapter,
+    KeycloakRegistrationService noDoubleOptInService = new KeycloakRegistrationService(keycloakAdapter, verificationService,
         REALM_NAME.getValue(), CLIENT_ID.getValue(), RegistrationMode.DEFAULT.name(), RegistrationRequirement.ROLE.name());
     // createUser
     doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
@@ -248,7 +253,7 @@ public class KeycloakRegistrationServiceTest {
 
   @Test
   void createVerificationLink() {
-    doReturn(VERIFICATION_LINK).when(keycloakAdapter).encode(token);
+    doReturn(VERIFICATION_LINK).when(verificationService).encode(token);
 
     VerificationLink response = service.encodeToken(token);
     assertThat(response).isEqualTo(VERIFICATION_LINK);
@@ -257,12 +262,11 @@ public class KeycloakRegistrationServiceTest {
 
   @Test
   void verifyVerificationLink() {
-    doReturn(token).when(keycloakAdapter).decode(VERIFICATION_LINK);
+    doReturn(token).when(verificationService).decode(VERIFICATION_LINK);
 
     Token response = service.decodeToken(VERIFICATION_LINK);
     assertThat(response).isEqualTo(token);
     verifyNoMoreInteractions(keycloakAdapter);
   }
-
 
 }

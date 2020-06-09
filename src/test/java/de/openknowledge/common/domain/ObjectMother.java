@@ -21,14 +21,14 @@ import java.util.List;
 import org.keycloak.representations.idm.RoleRepresentation;
 
 import de.openknowledge.authentication.domain.ClientId;
-import de.openknowledge.authentication.domain.RealmName;
-import de.openknowledge.authentication.domain.login.Login;
 import de.openknowledge.authentication.domain.Password;
+import de.openknowledge.authentication.domain.RealmName;
 import de.openknowledge.authentication.domain.Username;
-import de.openknowledge.authentication.domain.registration.Issuer;
-import de.openknowledge.authentication.domain.registration.VerificationLink;
+import de.openknowledge.authentication.domain.login.Login;
 import de.openknowledge.authentication.domain.registration.EmailAddress;
+import de.openknowledge.authentication.domain.registration.Issuer;
 import de.openknowledge.authentication.domain.registration.UserIdentifier;
+import de.openknowledge.authentication.domain.registration.VerificationLink;
 
 public class ObjectMother {
 
