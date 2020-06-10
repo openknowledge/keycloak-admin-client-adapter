@@ -13,25 +13,17 @@
  * See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package de.openknowledge.authentication.domain.registration;
+package de.openknowledge.authentication.domain.user;
 
-import static org.apache.commons.lang3.Validate.notBlank;
+public enum EmailVerifiedMode {
+  DEFAULT, REQUIRED;
 
-import de.openknowledge.common.domain.AbstractStringValueObject;
-
-public class VerificationLink extends AbstractStringValueObject {
-
-  private VerificationLink(String value) {
-    super(value);
-  }
-
-  protected VerificationLink() {
-    super();
-    // for framework
-  }
-
-  public static VerificationLink fromValue(String verificationLink) {
-    notBlank(verificationLink, "verificationLink may not be blank");
-    return new VerificationLink(verificationLink);
+  public static EmailVerifiedMode fromValue(String value) {
+    for (EmailVerifiedMode mode : values()) {
+      if (mode.name().equals(value.toUpperCase())) {
+        return mode;
+      }
+    }
+    throw new IllegalArgumentException("unsupported value: " + value);
   }
 }

@@ -55,4 +55,13 @@ public class LoginToken {
     return refreshExpiresIn;
   }
 
+  @Override
+  public String toString() {
+    return "LoginToken{"
+        + "token='" + token + "'"
+        + ", expiresIn=" + expiresIn
+        + ", refreshToken='" + refreshToken + "'"
+        + ", refreshExpiresIn=" + refreshExpiresIn
+        + "}";
+  }
 }

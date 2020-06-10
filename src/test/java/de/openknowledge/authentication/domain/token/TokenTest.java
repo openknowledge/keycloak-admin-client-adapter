@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package de.openknowledge.authentication.domain.registration;
+package de.openknowledge.authentication.domain.token;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,6 +31,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.openknowledge.authentication.domain.Username;
+import de.openknowledge.authentication.domain.registration.Issuer;
+import de.openknowledge.authentication.domain.registration.RegistrationMode;
+import de.openknowledge.authentication.domain.user.EmailAddress;
+import de.openknowledge.authentication.domain.user.UserIdentifier;
 
 class TokenTest {
 
@@ -43,13 +47,13 @@ class TokenTest {
   private final EmailAddress emailAddress = EmailAddress.fromValue("test.user@mail.de");
   private final Issuer issuer = Issuer.fromValue("testService");
 
-  private int timeToLive = 300;
+  private int timeToLife = 300;
   private Token token;
 
   @BeforeEach
   void setup() {
-    timeToLive = 5;
-    token = new Token(username, userIdentifier, emailAddress, issuer, timeToLive, TimeUnit.MINUTES);
+    timeToLife = 5;
+    token = new Token(username, userIdentifier, emailAddress, issuer, timeToLife, TimeUnit.MINUTES);
   }
 
   @Test
@@ -67,11 +71,17 @@ class TokenTest {
     assertThat(token.getType()).isEqualTo(RegistrationMode.DOUBLE_OPT_IN.name());
     assertThat(token.getIssuedAt()).isEqualTo(token.getNotBefore());
     assertThat(token.getNotBefore()).isEqualTo(token.getIssuedAt());
-    assertThat(token.getExpiration()).isEqualTo(token.getIssuedAt() + (timeToLive * 60));
-    assertThat(token.getTtlInMinutes()).isEqualTo(timeToLive);
+    assertThat(token.getExpiration()).isEqualTo(token.getIssuedAt() + (timeToLife * 60));
+    assertThat(token.getTtlInMinutes()).isEqualTo(timeToLife);
     assertThat(token.isActive(0)).isTrue();
     assertThat(token.isExpired()).isFalse();
     assertThat(token.isNotBefore(0)).isTrue();
+  }
+
+  @Test
+  void testValueOf() {
+    TimeUnit unit = TimeUnit.valueOf("MINUTES");
+    assertThat(unit).isEqualTo(TimeUnit.MINUTES);
   }
 
   @Test

@@ -53,12 +53,24 @@ public class KeycloakKeyService {
   private static final List<String> IGNORED_LINES = Arrays.asList(BEGIN_PUBLIC_KEY, END_PUBLIC_KEY, BEGIN_PRIVATE_KEY, END_PRIVATE_KEY);
 
   public static KeyPair readKeyPair(KeycloakKeyConfiguration config) {
+    PublicKey publicKey = null;
     String publicKeyContent = readFromFile(config.getFilenamePublicKey());
     LOG.debug("read public key content\n{}", publicKeyContent);
-    PublicKey publicKey = convertPublicKeyContent(publicKeyContent, config.getAlgorithm());
+    if (!publicKeyContent.isEmpty()) {
+      publicKey = convertPublicKeyContent(publicKeyContent, config.getAlgorithm());
+      LOG.debug("read public key");
+    }
+    PrivateKey privateKey = null;
     String privateKeyContent = readFromFile(config.getFilenamePrivateKey());
     LOG.debug("read private key content\n{}", privateKeyContent);
-    PrivateKey privateKey = convertPrivateKeyContent(privateKeyContent, config.getAlgorithm());
+    if (!privateKeyContent.isEmpty()) {
+      privateKey = convertPrivateKeyContent(privateKeyContent, config.getAlgorithm());
+      LOG.debug("read private key");
+    }
+    if (publicKey == null || privateKey == null) {
+      LOG.info("public key or private key are empty - fallback: generate new key pair");
+      return generateKeyPair(config);
+    }
     return new KeyPair(publicKey, privateKey);
   }
 
@@ -68,9 +80,9 @@ public class KeycloakKeyService {
       generator.initialize(2048);
       KeyPair keyPair = generator.generateKeyPair();
       String publicKeyContent = formatToFile(keyPair.getPublic());
-      writeToFile(publicKeyContent, "public.key");
+      writeToFile(publicKeyContent, config.getFilenamePublicKey());
       String privateKeyContent = formatToFile(keyPair.getPrivate());
-      writeToFile(privateKeyContent, "private.key");
+      writeToFile(privateKeyContent, config.getFilenamePrivateKey());
       return keyPair;
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalArgumentException("algorithm is not supported");
@@ -141,7 +153,7 @@ public class KeycloakKeyService {
     try {
       URL url = KeycloakKeyService.class.getClassLoader().getResource(resourceName);
       if (url == null) {
-        throw new IllegalArgumentException(resourceName + "is not a resource");
+        throw new IllegalArgumentException("'" + resourceName + "' is not a resource");
       }
       File file = new File(url.toURI());
       writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
@@ -168,7 +180,7 @@ public class KeycloakKeyService {
     try {
       InputStream is = KeycloakKeyService.class.getClassLoader().getResourceAsStream(resourceName);
       if (is == null) {
-        throw new IllegalArgumentException(resourceName + "is not a resource to stream");
+        throw new IllegalArgumentException("'" + resourceName + "' is not a resource to stream");
       }
       BufferedReader reader = new BufferedReader(new InputStreamReader(is));
       StringBuilder content = new StringBuilder();
