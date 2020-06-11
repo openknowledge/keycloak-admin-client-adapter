@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -33,6 +34,8 @@ import static de.openknowledge.common.domain.ObjectMother.createUserAccount;
 
 import java.util.ArrayList;
 import java.util.Collections;
+
+import javax.ws.rs.NotFoundException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,6 +67,9 @@ public class KeycloakUserServiceTest {
 
   @Mock
   private UsersResource usersResource;
+
+  @Mock
+  private UserResource userResource;
 
   private KeycloakUserService service;
 
@@ -134,9 +140,33 @@ public class KeycloakUserServiceTest {
   }
 
   @Test
+  void returnsValidOnGetUser() {
+    UserRepresentation keyCloakUser = new UserRepresentation();
+    keyCloakUser.setId(USER_IDENTIFIER.getValue());
+    keyCloakUser.setUsername(USERNAME.getValue());
+    keyCloakUser.setEmail(MAIL_ADDRESS.getValue());
+    doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
+    doReturn(userResource).when(usersResource).get(USER_IDENTIFIER.getValue());
+    doReturn(keyCloakUser).when(userResource).toRepresentation();
+    UserAccount account = service.getUser(USER_IDENTIFIER);
+    assertThat(account.getIdentifier()).isEqualTo(USER_IDENTIFIER);
+    assertThat(account.getUsername()).isEqualTo(USERNAME);
+  }
+
+  @Test
+  void returnsNotFoundOnGetUser() {
+    UserIdentifier userIdentifier = UserIdentifier.fromValue("47110815");
+    doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
+    doThrow(new NotFoundException()).when(usersResource).get(userIdentifier.getValue());
+
+    assertThrows(UserNotFoundException.class, () -> {
+      service.getUser(userIdentifier);
+    });
+  }
+
+  @Test
   void updateMailVerification() {
     UserRepresentation keyCloakUser = new UserRepresentation();
-    UserResource userResource = mock(UserResource.class);
     doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
     doReturn(userResource).when(usersResource).get(USER_IDENTIFIER.getValue());
     doReturn(keyCloakUser).when(userResource).toRepresentation();

@@ -16,15 +16,17 @@ import de.openknowledge.authentication.domain.token.Token;
 
 public class UserAccount {
 
+  private final Username username;
+
+  private final Password password;
+
+  private final EmailAddress emailAddress;
+
+  private final List<Attribute> attributes;
+
   private UserIdentifier identifier;
 
-  private Username username;
-
-  private Password password;
-
-  private EmailAddress emailAddress;
-
-  private List<Attribute> attributes;
+  private Name name;
 
   /**
    * UserAccount for user in keycloak with email address and password
@@ -49,9 +51,9 @@ public class UserAccount {
   }
 
   UserAccount(UserRepresentation user) {
-    identifier = UserIdentifier.fromValue(user.getId());
-    username = Username.fromValue(user.getUsername());
-    emailAddress = EmailAddress.fromValue(user.getEmail());
+    this(Username.fromValue(user.getUsername()), EmailAddress.fromValue(user.getEmail()), null);
+    setIdentifier(UserIdentifier.fromValue(user.getId()));
+    createName(user);
   }
 
   public Token asToken(Issuer issuer) {
@@ -82,12 +84,22 @@ public class UserAccount {
     return emailAddress;
   }
 
+  public Name getName() {
+    return name;
+  }
+
   public List<Attribute> getAttributes() {
     return attributes;
   }
 
-  void setIdentifier(UserIdentifier identifier) {
-    this.identifier = identifier;
+  void setIdentifier(UserIdentifier anIdentifier) {
+    notNull(anIdentifier, "identifier may not be null");
+    identifier = anIdentifier;
+  }
+
+  public void setName(Name aName) {
+    notNull(aName, "name may not be null");
+    name = aName;
   }
 
   public void addAttribute(Attribute theAttribute) {
@@ -108,12 +120,13 @@ public class UserAccount {
         Objects.equals(getUsername(), that.getUsername()) &&
         Objects.equals(getPassword(), that.getPassword()) &&
         Objects.equals(getEmailAddress(), that.getEmailAddress()) &&
+        Objects.equals(getName(), that.getName()) &&
         Objects.equals(getAttributes(), that.getAttributes());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getIdentifier(), getUsername(), getPassword(), getEmailAddress(), getAttributes());
+    return Objects.hash(getIdentifier(), getUsername(), getPassword(), getEmailAddress(), getName(), getAttributes());
   }
 
   @Override
@@ -123,7 +136,20 @@ public class UserAccount {
         + ", username=" + username
         + ", password=******"
         + ", emailAddress=" + emailAddress
+        + ", name=" + name
         + ", attributes=" + attributes
         + "}";
+  }
+
+  private void createName(UserRepresentation user) {
+    FirstName firstName = user.getFirstName() != null ? FirstName.fromValue(user.getFirstName()) : null;
+    LastName lastName = user.getLastName() != null ? LastName.fromValue(user.getLastName()) : null;
+    if (firstName != null && lastName != null) {
+      setName(Name.fromValues(firstName, lastName));
+    } else if (firstName != null) {
+      setName(Name.fromValue(firstName));
+    } else if (lastName != null) {
+      setName(Name.fromValue(lastName));
+    }
   }
 }

@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 
 import org.keycloak.admin.client.resource.GroupsResource;
@@ -97,22 +98,24 @@ public class KeycloakUserService {
     return userAccount;
   }
 
-  public UserAccount getUser(UserIdentifier userIdentifier) {
-    UsersResource usersResource = keycloakAdapter.findUserResource(getRealmName());
-    List<UserRepresentation> existingUsersByIdentifier = usersResource.search(userIdentifier.getValue(), 0, 1);
-    if (existingUsersByIdentifier == null || existingUsersByIdentifier.isEmpty()) {
-      // not found
-      throw new IllegalArgumentException();
+  public UserAccount getUser(UserIdentifier userIdentifier) throws UserNotFoundException {
+    try {
+      UserResource userResource = keycloakAdapter.findUserResource(getRealmName()).get(userIdentifier.getValue());
+      return new UserAccount(userResource.toRepresentation());
+    } catch (NotFoundException e) {
+      throw new UserNotFoundException(userIdentifier);
     }
-    UserRepresentation user = existingUsersByIdentifier.get(0);
-    return new UserAccount(user);
   }
 
   public void updateMailVerification(UserIdentifier userIdentifier) {
-    UserResource userResource = keycloakAdapter.findUserResource(getRealmName()).get(userIdentifier.getValue());
-    UserRepresentation user = userResource.toRepresentation();
-    user.setEmailVerified(true);
-    userResource.update(user);
+    try {
+      UserResource userResource = keycloakAdapter.findUserResource(getRealmName()).get(userIdentifier.getValue());
+      UserRepresentation user = userResource.toRepresentation();
+      user.setEmailVerified(true);
+      userResource.update(user);
+    } catch (NotFoundException e) {
+      throw new UserNotFoundException(userIdentifier);
+    }
   }
 
   public void joinGroups(UserIdentifier userIdentifier, GroupName... groupNames) {
@@ -154,6 +157,14 @@ public class KeycloakUserService {
     keycloakUser.setUsername(userAccount.getUsername().getValue());
     keycloakUser.setEmail(userAccount.getEmailAddress().getValue());
     keycloakUser.setEnabled(true);
+
+    if (userAccount.getName() != null && userAccount.getName().getFirstName() != null) {
+      keycloakUser.setFirstName(userAccount.getName().getFirstName().getValue());
+    }
+
+    if (userAccount.getName() != null && userAccount.getName().getLastName() != null) {
+      keycloakUser.setLastName(userAccount.getName().getLastName().getValue());
+    }
 
     if (EmailVerifiedMode.REQUIRED.equals(mode)) {
       keycloakUser.setEmailVerified(false);
