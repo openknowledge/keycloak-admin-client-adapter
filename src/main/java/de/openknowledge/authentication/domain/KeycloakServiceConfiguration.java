@@ -23,6 +23,12 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @ApplicationScoped
 public class KeycloakServiceConfiguration {
 
+  private static final String REALM_PROPERTY = "keycloak.service.realm";
+  private static final String CLIENT_ID_PROPERTY = "keycloak.service.clientId";
+
+  private static final String REALM_DEFAULT = "missingRealm";
+  private static final String CLIENT_ID_DEFAULT = "missingClientId";
+
   private String realm;
 
   private String clientId;
@@ -33,8 +39,8 @@ public class KeycloakServiceConfiguration {
 
   @Inject
   public KeycloakServiceConfiguration(
-      @ConfigProperty(name = "keycloak.service.realm") String aRealm,
-      @ConfigProperty(name = "keycloak.service.clientId") String aClientId) {
+      @ConfigProperty(name = REALM_PROPERTY, defaultValue = REALM_DEFAULT) String aRealm,
+      @ConfigProperty(name = CLIENT_ID_PROPERTY, defaultValue = CLIENT_ID_DEFAULT) String aClientId) {
     realm = aRealm;
     clientId = aClientId;
   }
@@ -45,6 +51,15 @@ public class KeycloakServiceConfiguration {
 
   public String getClientId() {
     return clientId;
+  }
+
+  public void validate() {
+    if (REALM_DEFAULT.equals(getRealm())) {
+      throw new InvalidConfigurationException(REALM_PROPERTY);
+    }
+    if (CLIENT_ID_DEFAULT.equals(getClientId())) {
+      throw new InvalidConfigurationException(CLIENT_ID_PROPERTY);
+    }
   }
 
 }

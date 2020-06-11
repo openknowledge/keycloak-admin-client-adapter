@@ -20,7 +20,7 @@ public enum RegistrationMode {
 
   public static RegistrationMode fromValue(String value) {
     for (RegistrationMode mode : values()) {
-      if (mode.name().equals(value.toUpperCase())) {
+      if (mode.name().equalsIgnoreCase(value)) {
         return mode;
       }
     }

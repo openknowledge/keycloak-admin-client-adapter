@@ -21,25 +21,26 @@ import static org.keycloak.OAuth2Constants.PASSWORD;
 import static org.keycloak.OAuth2Constants.REFRESH_TOKEN;
 import static org.keycloak.OAuth2Constants.USERNAME;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.core.Form;
 
 import org.keycloak.representations.AccessTokenResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import de.openknowledge.authentication.domain.ClientId;
 import de.openknowledge.authentication.domain.KeycloakAdapter;
 import de.openknowledge.authentication.domain.KeycloakServiceConfiguration;
-import de.openknowledge.authentication.domain.RealmName;
 
 @ApplicationScoped
 public class KeycloakLoginService {
 
+  private static final Logger LOG = LoggerFactory.getLogger(KeycloakLoginService.class);
+
   private KeycloakAdapter keycloakAdapter;
 
-  private RealmName realmName;
-
-  private ClientId clientId;
+  private KeycloakServiceConfiguration serviceConfiguration;
 
   @SuppressWarnings("unused")
   protected KeycloakLoginService() {
@@ -50,9 +51,15 @@ public class KeycloakLoginService {
   public KeycloakLoginService(KeycloakAdapter aKeycloakAdapter,
       KeycloakServiceConfiguration aServiceConfiguration) {
     keycloakAdapter = aKeycloakAdapter;
-    realmName = RealmName.fromValue(aServiceConfiguration.getRealm());
-    clientId = ClientId.fromValue(aServiceConfiguration.getClientId());
+    serviceConfiguration = aServiceConfiguration;
   }
+
+  @PostConstruct
+  public void init() {
+    LOG.debug("check configuration");
+    serviceConfiguration.validate();
+  }
+
 
   public LoginToken login(Login login) {
     AccessTokenResponse response = grantToken(login);
@@ -70,18 +77,18 @@ public class KeycloakLoginService {
     Form form = new Form().param(GRANT_TYPE, PASSWORD)
         .param(USERNAME, login.getUsername().getValue())
         .param(PASSWORD, login.getPassword().getValue())
-        .param(CLIENT_ID, clientId.getValue());
+        .param(CLIENT_ID, serviceConfiguration.getClientId());
     synchronized (this) {
-      return keycloakAdapter.getTokenService().grantToken(realmName.getValue(), form.asMap());
+      return keycloakAdapter.getTokenService().grantToken(serviceConfiguration.getRealm(), form.asMap());
     }
   }
 
   private AccessTokenResponse refreshToken(RefreshToken refreshToken) {
     Form form = new Form().param(GRANT_TYPE, REFRESH_TOKEN)
         .param(REFRESH_TOKEN, refreshToken.getValue())
-        .param(CLIENT_ID, clientId.getValue());
+        .param(CLIENT_ID, serviceConfiguration.getClientId());
     synchronized (this) {
-      return keycloakAdapter.getTokenService().refreshToken(realmName.getValue(), form.asMap());
+      return keycloakAdapter.getTokenService().refreshToken(serviceConfiguration.getRealm(), form.asMap());
     }
   }
 }

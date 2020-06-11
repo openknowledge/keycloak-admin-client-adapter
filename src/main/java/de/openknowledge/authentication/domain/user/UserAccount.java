@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import org.keycloak.representations.idm.UserRepresentation;
+
 import de.openknowledge.authentication.domain.Password;
 import de.openknowledge.authentication.domain.Username;
 import de.openknowledge.authentication.domain.registration.Issuer;
@@ -44,6 +46,12 @@ public class UserAccount {
     emailAddress = theEmailAddress;
     password = thePassword;
     attributes = new ArrayList<>();
+  }
+
+  UserAccount(UserRepresentation user) {
+    identifier = UserIdentifier.fromValue(user.getId());
+    username = Username.fromValue(user.getUsername());
+    emailAddress = EmailAddress.fromValue(user.getEmail());
   }
 
   public Token asToken(Issuer issuer) {

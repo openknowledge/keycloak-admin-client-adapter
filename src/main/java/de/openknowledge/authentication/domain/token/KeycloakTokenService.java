@@ -39,9 +39,6 @@ import org.keycloak.jose.jwe.enc.JWEEncryptionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.openknowledge.authentication.domain.KeycloakKeyConfiguration;
-import de.openknowledge.authentication.domain.KeycloakKeyService;
-
 @ApplicationScoped
 public class KeycloakTokenService {
 
@@ -65,6 +62,8 @@ public class KeycloakTokenService {
 
   @PostConstruct
   public void init() {
+    LOG.debug("check configuration");
+    keyConfiguration.validate();
     keyPair = KeycloakKeyService.readKeyPair(keyConfiguration);
     tokenSecret = TokenSecret.fromValue(keyConfiguration.getTokenSecret());
   }

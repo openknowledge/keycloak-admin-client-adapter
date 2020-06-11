@@ -14,11 +14,11 @@ The following required configuration must be provided by the 'microprofile-confi
 The adapter configuration configures the 'keycloak-admin-client' to interact with the keycloak for user management. 
 
 ```
-keycloak.adapter.serverUrl=<KEYCLOAK_URL: default = no default, default = no default, example = "http://localhost:8282/auth">
+keycloak.adapter.serverUrl=<KEYCLOAK_URL: default = no valid default, default = no default, example = "http://localhost:8282/auth">
 keycloak.adapter.masterRealm=<KEYCLOAK_MASTER_REALM: default = "master", example = "master">
 keycloak.adapter.admin.clientId=<KEYCLOAK_REALM_CLIENT_ID: default = "admin-cli", example = "admin-cli">
-keycloak.adapter.admin.username=<KEYCLOAK_REALM_USER: default = no default, example = "admin">
-keycloak.adapter.admin.password=<KEYCLOAK_REALM_PASSWORD: default = no default, example = "keycloak">
+keycloak.adapter.admin.username=<KEYCLOAK_REALM_USER: default = no valid default, example = "admin">
+keycloak.adapter.admin.password=<KEYCLOAK_REALM_PASSWORD: default = no valid default, example = "keycloak">
 keycloak.adapter.grantType=<KEYCLOAK_GRANT_TYPE: default = "password", example = "password">
 keycloak.adapter.connectionPoolSize=<KEYCLOAK_CONNECTION_POOL_SIZE: default = "5", example = "5">
 ```
@@ -28,9 +28,9 @@ keycloak.adapter.connectionPoolSize=<KEYCLOAK_CONNECTION_POOL_SIZE: default = "5
 The key configuration will be required to create and verify a double-opt-in link (based on JWT) 
 
 ```
-keycloak.keyPair.filename.publicKey=<KEYCLOAK_PUBLIC_KEY_FILENAME: default = "public.key", example = "public.key">
-keycloak.keyPair.filename.privateKey=<KEYCLOAK_PRIVATE_KEY_FILENAME: default = "private.key", example = "private.key">
-keycloak.keyPair.tokenSecret=<KEYCLOAK_PUBLIC_TOKEN_SECRET: default = no default, example = bg601f81f747428166e90541603frade>
+keycloak.keyPair.filename.publicKey=<KEYCLOAK_PUBLIC_KEY_FILENAME: default = no valid default, example = "public.key">
+keycloak.keyPair.filename.privateKey=<KEYCLOAK_PRIVATE_KEY_FILENAME: default = no valid default, example = "private.key">
+keycloak.keyPair.tokenSecret=<KEYCLOAK_PUBLIC_TOKEN_SECRET: default = no valid default, example = bg601f81f747428166e90541603frade>
 keycloak.keyPair.algorithm=<KEYCLOAK_KEY_ALGORITHM: default = "RSA", example = "RSA">
 ```
 
@@ -39,11 +39,11 @@ keycloak.keyPair.algorithm=<KEYCLOAK_KEY_ALGORITHM: default = "RSA", example = "
 The service configuration will be used to configure the realm and client the user will be created or updated or login 
 
 ```
-keycloak.serivce.realm=<KEYCLOAK_REALM: default = no default, example = "MicroProfile">
-keycloak.service.clientId=<KEYCLOAK_REALM_CLIENT_ID: default = no default, example = "web_application">
+keycloak.serivce.realm=<KEYCLOAK_REALM: default = no valid default, example = "MicroProfile">
+keycloak.service.clientId=<KEYCLOAK_REALM_CLIENT_ID: default = no valid default, example = "web_application">
 ```
 
-#### Keycloak registration service configuration {KeycloakRegistrationService.java}
+#### Keycloak registration service configuration {KeycloakRegistrationServiceConfiguration.java}
 
 The registration configuration configures the registration service to use double opt in or requires the role access 
 by keycloak extension (the keycloak creates a realm role with the clientId name as value to allow access to a client).

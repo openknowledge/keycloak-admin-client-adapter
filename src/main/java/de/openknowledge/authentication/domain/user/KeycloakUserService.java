@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
@@ -51,7 +52,7 @@ public class KeycloakUserService {
 
   private KeycloakAdapter keycloakAdapter;
 
-  private RealmName realmName;
+  private KeycloakServiceConfiguration serviceConfiguration;
 
   @SuppressWarnings("unused")
   protected KeycloakUserService() {
@@ -62,11 +63,17 @@ public class KeycloakUserService {
   public KeycloakUserService(KeycloakAdapter aKeycloakAdapter,
       KeycloakServiceConfiguration aServiceConfiguration) {
     keycloakAdapter = aKeycloakAdapter;
-    realmName = RealmName.fromValue(aServiceConfiguration.getRealm());
+    serviceConfiguration = aServiceConfiguration;
+  }
+
+  @PostConstruct
+  public void init() {
+    LOG.debug("check configuration");
+    serviceConfiguration.validate();
   }
 
   public boolean checkAlreadyExist(UserAccount userAccount) {
-    UsersResource usersResource = keycloakAdapter.findUserResource(realmName);
+    UsersResource usersResource = keycloakAdapter.findUserResource(getRealmName());
     List<UserRepresentation> existingUsersByUsername = usersResource.search(userAccount.getUsername().getValue());
     LOG.info("List size by username is: {}",
         (existingUsersByUsername != null ? existingUsersByUsername.size() : "null"));
@@ -77,7 +84,7 @@ public class KeycloakUserService {
     UserRepresentation newUser = extractUser(userAccount, mode);
     newUser.setCredentials(Collections.singletonList(extractCredential(userAccount)));
     newUser.setAttributes(extractAttributes(userAccount));
-    Response response = keycloakAdapter.findUserResource(realmName).create(newUser);
+    Response response = keycloakAdapter.findUserResource(getRealmName()).create(newUser);
     if (response.getStatus() != 201) {
       throw new UserCreationFailedException(newUser.getUsername(), response.getStatus());
     }
@@ -90,14 +97,26 @@ public class KeycloakUserService {
     return userAccount;
   }
 
+  public UserAccount getUser(UserIdentifier userIdentifier) {
+    UsersResource usersResource = keycloakAdapter.findUserResource(getRealmName());
+    List<UserRepresentation> existingUsersByIdentifier = usersResource.search(userIdentifier.getValue(), 0, 1);
+    if (existingUsersByIdentifier == null || existingUsersByIdentifier.isEmpty()) {
+      // not found
+      throw new IllegalArgumentException();
+    }
+    UserRepresentation user = existingUsersByIdentifier.get(0);
+    return new UserAccount(user);
+  }
+
   public void updateMailVerification(UserIdentifier userIdentifier) {
-    UserResource userResource = keycloakAdapter.findUserResource(realmName).get(userIdentifier.getValue());
+    UserResource userResource = keycloakAdapter.findUserResource(getRealmName()).get(userIdentifier.getValue());
     UserRepresentation user = userResource.toRepresentation();
     user.setEmailVerified(true);
     userResource.update(user);
   }
 
   public void joinGroups(UserIdentifier userIdentifier, GroupName... groupNames) {
+    RealmName realmName = getRealmName();
     GroupsResource resource = keycloakAdapter.findGroupResource(realmName);
     List<GroupId> joiningGroups = new ArrayList<>();
     for (GroupName groupName : groupNames) {
@@ -115,6 +134,7 @@ public class KeycloakUserService {
   }
 
   public void joinRoles(UserIdentifier userIdentifier, RoleName... roleNames) {
+    RealmName realmName = getRealmName();
     RolesResource resource = keycloakAdapter.findRoleResource(realmName);
     List<RoleRepresentation> joiningRoles = new ArrayList<>();
     for (RoleName roleName : roleNames) {
@@ -155,17 +175,20 @@ public class KeycloakUserService {
   private Map<String, List<String>> extractAttributes(UserAccount userAccount) {
     Map<String, List<String>> userAttributeMap = new HashMap<>();
     for (Attribute attribute : userAccount.getAttributes()) {
+      List<String> userAttributeList;
       if (userAttributeMap.containsKey(attribute.getKey())) {
-        List<String> userAttributeList = userAttributeMap.get(attribute.getKey());
-        userAttributeList.add(attribute.getValue());
-        userAttributeMap.put(attribute.getKey(), userAttributeList);
+        userAttributeList = userAttributeMap.get(attribute.getKey());
       } else {
-        List<String> userAttributeList = new ArrayList<>();
-        userAttributeList.add(attribute.getValue());
-        userAttributeMap.put(attribute.getKey(), userAttributeList);
+        userAttributeList = new ArrayList<>();
       }
+      userAttributeList.add(attribute.getValue());
+      userAttributeMap.put(attribute.getKey(), userAttributeList);
     }
     return userAttributeMap;
+  }
+
+  private RealmName getRealmName() {
+    return RealmName.fromValue(serviceConfiguration.getRealm());
   }
 
 }
