@@ -44,12 +44,12 @@ public class KeycloakAdapterConfiguration {
   @Inject
   public KeycloakAdapterConfiguration(
       @ConfigProperty(name = "keycloak.adapter.serverUrl") String aServerUrl,
-      @ConfigProperty(name = "keycloak.adapter.masterRealm") String aMasterRealm,
-      @ConfigProperty(name = "keycloak.adapter.admin.clientId") String aClientId,
+      @ConfigProperty(name = "keycloak.adapter.masterRealm", defaultValue = "master") String aMasterRealm,
+      @ConfigProperty(name = "keycloak.adapter.admin.clientId", defaultValue = "admin-cli") String aClientId,
       @ConfigProperty(name = "keycloak.adapter.admin.username") String anUsername,
       @ConfigProperty(name = "keycloak.adapter.admin.password") String aPassword,
-      @ConfigProperty(name = "keycloak.adapter.grantType") String aGrantType,
-      @ConfigProperty(name = "keycloak.adapter.connectionPoolSize") String aConnectionPoolSize) {
+      @ConfigProperty(name = "keycloak.adapter.grantType", defaultValue = "password") String aGrantType,
+      @ConfigProperty(name = "keycloak.adapter.connectionPoolSize", defaultValue = "5") String aConnectionPoolSize) {
     serverUrl = aServerUrl;
     masterRealm = aMasterRealm;
     clientId = aClientId;

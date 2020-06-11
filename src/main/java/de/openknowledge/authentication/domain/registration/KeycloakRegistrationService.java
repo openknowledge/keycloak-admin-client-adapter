@@ -19,10 +19,10 @@ import static org.apache.commons.lang3.Validate.notNull;
 
 import java.util.concurrent.TimeUnit;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,15 +47,9 @@ public class KeycloakRegistrationService {
 
   private KeycloakTokenService keycloakTokenService;
 
-  private ClientId clientId;
+  private KeycloakServiceConfiguration serviceConfiguration;
 
-  private RegistrationMode registrationMode;
-
-  private RegistrationRequirement registrationRequirement;
-
-  private Integer tokenLifeTime;
-
-  private TimeUnit timeUnit;
+  private KeycloakRegistrationServiceConfiguration registrationServiceConfiguration;
 
   @SuppressWarnings("unused")
   protected KeycloakRegistrationService() {
@@ -64,19 +58,20 @@ public class KeycloakRegistrationService {
 
   @Inject
   public KeycloakRegistrationService(KeycloakServiceConfiguration aServiceConfiguration,
+      KeycloakRegistrationServiceConfiguration aRegistrationServiceConfiguration,
       KeycloakUserService aKeycloakUserService,
-      KeycloakTokenService aKeycloakTokenService,
-      @ConfigProperty(name = "keycloak.registration.mode", defaultValue = "DEFAULT") String aRegistrationMode,
-      @ConfigProperty(name = "keycloak.registration.roleRequire", defaultValue = "DEFAULT") String aRegistrationRequirement,
-      @ConfigProperty(name = "keycloak.registration.tokenLifeTime", defaultValue = "5") String aTokenLifeTime,
-      @ConfigProperty(name = "keycloak.registration.tokenTimeUnit", defaultValue = "MINUTE") String aTimeUnit) {
+      KeycloakTokenService aKeycloakTokenService) {
     keycloakUserService = aKeycloakUserService;
     keycloakTokenService = aKeycloakTokenService;
-    clientId = ClientId.fromValue(aServiceConfiguration.getClientId());
-    registrationMode = RegistrationMode.fromValue(aRegistrationMode);
-    registrationRequirement = RegistrationRequirement.fromValue(aRegistrationRequirement);
-    tokenLifeTime = Integer.parseInt(aTokenLifeTime);
-    timeUnit = TimeUnit.valueOf(aTimeUnit);
+    serviceConfiguration = aServiceConfiguration;
+    registrationServiceConfiguration = aRegistrationServiceConfiguration;
+  }
+
+  @PostConstruct
+  public void init() {
+    LOG.debug("check configuration");
+    serviceConfiguration.validate();
+    registrationServiceConfiguration.validate();
   }
 
   public UserAccount register(UserAccount userAccount) throws RegistrationFailedException {
@@ -90,15 +85,16 @@ public class KeycloakRegistrationService {
     // create new user
     UserAccount newUserAccount;
     try {
-      EmailVerifiedMode emailVerifiedMode = convert(registrationMode);
+      EmailVerifiedMode emailVerifiedMode = getEmailVerifiedMode();
       newUserAccount = keycloakUserService.createUser(userAccount, emailVerifiedMode);
     } catch (UserCreationFailedException e) {
       throw new RegistrationFailedException(e);
     }
 
     // if the clientId as realm role is required to access client
-    if (RegistrationRequirement.ROLE.equals(registrationRequirement)) {
+    if (isRoleRequired()) {
       // client id as role to access client (because: required role extension)
+      ClientId clientId = ClientId.fromValue(serviceConfiguration.getClientId());
       keycloakUserService.joinRoles(newUserAccount.getIdentifier(), RoleName.fromValue(clientId.getValue()));
     }
 
@@ -123,6 +119,8 @@ public class KeycloakRegistrationService {
   }
 
   public VerificationLink createVerificationLink(UserAccount userAccount, Issuer issuer) {
+    Integer tokenLifeTime = Integer.parseInt(registrationServiceConfiguration.getTokenLifeTime());
+    TimeUnit timeUnit = TimeUnit.valueOf(registrationServiceConfiguration.getTimeUnit());
     Token token = userAccount.asToken(issuer, tokenLifeTime, timeUnit);
     return keycloakTokenService.encode(token);
   }
@@ -131,15 +129,20 @@ public class KeycloakRegistrationService {
     return keycloakUserService;
   }
 
-  private EmailVerifiedMode convert(RegistrationMode registrationMode) {
-    switch (registrationMode) {
+  private EmailVerifiedMode getEmailVerifiedMode() {
+    switch (RegistrationMode.fromValue(registrationServiceConfiguration.getRegistrationMode())) {
       case DOUBLE_OPT_IN:
         return EmailVerifiedMode.REQUIRED;
       case DEFAULT:
         return EmailVerifiedMode.DEFAULT;
       default:
-        throw new IllegalArgumentException("unsupported RegistrationMode " + registrationMode);
+        throw new IllegalArgumentException("unsupported RegistrationMode " + registrationServiceConfiguration.getRegistrationMode());
     }
+  }
+
+  private boolean isRoleRequired() {
+    return RegistrationRequirement.ROLE.equals(
+        RegistrationRequirement.fromValue(registrationServiceConfiguration.getRegistrationRequirement()));
   }
 
 }

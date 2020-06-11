@@ -22,8 +22,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 
 import org.keycloak.admin.client.resource.GroupsResource;
@@ -51,7 +53,7 @@ public class KeycloakUserService {
 
   private KeycloakAdapter keycloakAdapter;
 
-  private RealmName realmName;
+  private KeycloakServiceConfiguration serviceConfiguration;
 
   @SuppressWarnings("unused")
   protected KeycloakUserService() {
@@ -62,11 +64,17 @@ public class KeycloakUserService {
   public KeycloakUserService(KeycloakAdapter aKeycloakAdapter,
       KeycloakServiceConfiguration aServiceConfiguration) {
     keycloakAdapter = aKeycloakAdapter;
-    realmName = RealmName.fromValue(aServiceConfiguration.getRealm());
+    serviceConfiguration = aServiceConfiguration;
+  }
+
+  @PostConstruct
+  public void init() {
+    LOG.debug("check configuration");
+    serviceConfiguration.validate();
   }
 
   public boolean checkAlreadyExist(UserAccount userAccount) {
-    UsersResource usersResource = keycloakAdapter.findUserResource(realmName);
+    UsersResource usersResource = keycloakAdapter.findUserResource(getRealmName());
     List<UserRepresentation> existingUsersByUsername = usersResource.search(userAccount.getUsername().getValue());
     LOG.info("List size by username is: {}",
         (existingUsersByUsername != null ? existingUsersByUsername.size() : "null"));
@@ -77,7 +85,7 @@ public class KeycloakUserService {
     UserRepresentation newUser = extractUser(userAccount, mode);
     newUser.setCredentials(Collections.singletonList(extractCredential(userAccount)));
     newUser.setAttributes(extractAttributes(userAccount));
-    Response response = keycloakAdapter.findUserResource(realmName).create(newUser);
+    Response response = keycloakAdapter.findUserResource(getRealmName()).create(newUser);
     if (response.getStatus() != 201) {
       throw new UserCreationFailedException(newUser.getUsername(), response.getStatus());
     }
@@ -90,14 +98,28 @@ public class KeycloakUserService {
     return userAccount;
   }
 
-  public void updateMailVerification(UserIdentifier userIdentifier) {
-    UserResource userResource = keycloakAdapter.findUserResource(realmName).get(userIdentifier.getValue());
-    UserRepresentation user = userResource.toRepresentation();
-    user.setEmailVerified(true);
-    userResource.update(user);
+  public UserAccount getUser(UserIdentifier userIdentifier) throws UserNotFoundException {
+    try {
+      UserResource userResource = keycloakAdapter.findUserResource(getRealmName()).get(userIdentifier.getValue());
+      return new UserAccount(userResource.toRepresentation());
+    } catch (NotFoundException e) {
+      throw new UserNotFoundException(userIdentifier);
+    }
   }
 
-  public void joinGroups(UserIdentifier userIdentifier, GroupName... groupNames) {
+  public void updateMailVerification(UserIdentifier userIdentifier) throws UserNotFoundException {
+    try {
+      UserResource userResource = keycloakAdapter.findUserResource(getRealmName()).get(userIdentifier.getValue());
+      UserRepresentation user = userResource.toRepresentation();
+      user.setEmailVerified(true);
+      userResource.update(user);
+    } catch (NotFoundException e) {
+      throw new UserNotFoundException(userIdentifier);
+    }
+  }
+
+  public void joinGroups(UserIdentifier userIdentifier, GroupName... groupNames) throws UserNotFoundException {
+    RealmName realmName = getRealmName();
     GroupsResource resource = keycloakAdapter.findGroupResource(realmName);
     List<GroupId> joiningGroups = new ArrayList<>();
     for (GroupName groupName : groupNames) {
@@ -108,13 +130,18 @@ public class KeycloakUserService {
         joiningGroups.addAll(groups.stream().map(group -> GroupId.fromValue(group.getId())).collect(Collectors.toList()));
       }
     }
-    UserResource userResource = keycloakAdapter.findUserResource(realmName).get(userIdentifier.getValue());
-    for (GroupId groupId : joiningGroups) {
-      userResource.joinGroup(groupId.getValue());
+    try {
+      UserResource userResource = keycloakAdapter.findUserResource(realmName).get(userIdentifier.getValue());
+      for (GroupId groupId : joiningGroups) {
+        userResource.joinGroup(groupId.getValue());
+      }
+    } catch (NotFoundException e) {
+      throw new UserNotFoundException(userIdentifier);
     }
   }
 
-  public void joinRoles(UserIdentifier userIdentifier, RoleName... roleNames) {
+  public void joinRoles(UserIdentifier userIdentifier, RoleName... roleNames) throws UserNotFoundException {
+    RealmName realmName = getRealmName();
     RolesResource resource = keycloakAdapter.findRoleResource(realmName);
     List<RoleRepresentation> joiningRoles = new ArrayList<>();
     for (RoleName roleName : roleNames) {
@@ -125,8 +152,12 @@ public class KeycloakUserService {
         joiningRoles.addAll(roles);
       }
     }
-    UserResource userResource = keycloakAdapter.findUserResource(realmName).get(userIdentifier.getValue());
-    userResource.roles().realmLevel().add(joiningRoles);
+    try {
+      UserResource userResource = keycloakAdapter.findUserResource(realmName).get(userIdentifier.getValue());
+      userResource.roles().realmLevel().add(joiningRoles);
+    } catch (NotFoundException e) {
+      throw new UserNotFoundException(userIdentifier);
+    }
   }
 
   private UserRepresentation extractUser(UserAccount userAccount, EmailVerifiedMode mode) {
@@ -134,6 +165,14 @@ public class KeycloakUserService {
     keycloakUser.setUsername(userAccount.getUsername().getValue());
     keycloakUser.setEmail(userAccount.getEmailAddress().getValue());
     keycloakUser.setEnabled(true);
+
+    if (userAccount.getName() != null && userAccount.getName().getFirstName() != null) {
+      keycloakUser.setFirstName(userAccount.getName().getFirstName().getValue());
+    }
+
+    if (userAccount.getName() != null && userAccount.getName().getLastName() != null) {
+      keycloakUser.setLastName(userAccount.getName().getLastName().getValue());
+    }
 
     if (EmailVerifiedMode.REQUIRED.equals(mode)) {
       keycloakUser.setEmailVerified(false);
@@ -155,17 +194,20 @@ public class KeycloakUserService {
   private Map<String, List<String>> extractAttributes(UserAccount userAccount) {
     Map<String, List<String>> userAttributeMap = new HashMap<>();
     for (Attribute attribute : userAccount.getAttributes()) {
+      List<String> userAttributeList;
       if (userAttributeMap.containsKey(attribute.getKey())) {
-        List<String> userAttributeList = userAttributeMap.get(attribute.getKey());
-        userAttributeList.add(attribute.getValue());
-        userAttributeMap.put(attribute.getKey(), userAttributeList);
+        userAttributeList = userAttributeMap.get(attribute.getKey());
       } else {
-        List<String> userAttributeList = new ArrayList<>();
-        userAttributeList.add(attribute.getValue());
-        userAttributeMap.put(attribute.getKey(), userAttributeList);
+        userAttributeList = new ArrayList<>();
       }
+      userAttributeList.add(attribute.getValue());
+      userAttributeMap.put(attribute.getKey(), userAttributeList);
     }
     return userAttributeMap;
+  }
+
+  private RealmName getRealmName() {
+    return RealmName.fromValue(serviceConfiguration.getRealm());
   }
 
 }

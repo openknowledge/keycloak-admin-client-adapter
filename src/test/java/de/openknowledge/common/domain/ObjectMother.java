@@ -17,17 +17,21 @@ package de.openknowledge.common.domain;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.keycloak.representations.idm.RoleRepresentation;
 
 import de.openknowledge.authentication.domain.ClientId;
-import de.openknowledge.authentication.domain.RealmName;
-import de.openknowledge.authentication.domain.login.Login;
 import de.openknowledge.authentication.domain.Password;
+import de.openknowledge.authentication.domain.RealmName;
 import de.openknowledge.authentication.domain.Username;
+import de.openknowledge.authentication.domain.login.Login;
 import de.openknowledge.authentication.domain.registration.Issuer;
+import de.openknowledge.authentication.domain.token.Token;
 import de.openknowledge.authentication.domain.token.VerificationLink;
 import de.openknowledge.authentication.domain.user.EmailAddress;
+import de.openknowledge.authentication.domain.user.UserAccount;
+import de.openknowledge.authentication.domain.user.UserAccountAdapter;
 import de.openknowledge.authentication.domain.user.UserIdentifier;
 
 public class ObjectMother {
@@ -43,6 +47,18 @@ public class ObjectMother {
 
   public static Login createLogin() {
     return new Login(USERNAME, PASSWORD);
+  }
+
+  public static UserAccount createUserAccount(Boolean withIdentifier) {
+    if (withIdentifier) {
+      return new UserAccountAdapter(USERNAME, MAIL_ADDRESS, PASSWORD, USER_IDENTIFIER);
+    } else {
+      return new UserAccount(USERNAME, MAIL_ADDRESS, PASSWORD);
+    }
+  }
+
+  public static Token createToken() {
+    return new Token(USERNAME, USER_IDENTIFIER, MAIL_ADDRESS, ISSUER, 5, TimeUnit.MINUTES);
   }
 
   public static List<RoleRepresentation> createRoleRepresentations() {

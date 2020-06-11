@@ -20,7 +20,7 @@ public enum EmailVerifiedMode {
 
   public static EmailVerifiedMode fromValue(String value) {
     for (EmailVerifiedMode mode : values()) {
-      if (mode.name().equals(value.toUpperCase())) {
+      if (mode.name().equalsIgnoreCase(value)) {
         return mode;
       }
     }

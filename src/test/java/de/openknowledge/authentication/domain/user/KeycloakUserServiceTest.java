@@ -20,22 +20,22 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import static de.openknowledge.common.domain.ObjectMother.CLIENT_ID;
-import static de.openknowledge.common.domain.ObjectMother.ISSUER;
 import static de.openknowledge.common.domain.ObjectMother.MAIL_ADDRESS;
 import static de.openknowledge.common.domain.ObjectMother.PASSWORD;
 import static de.openknowledge.common.domain.ObjectMother.REALM_NAME;
 import static de.openknowledge.common.domain.ObjectMother.USERNAME;
 import static de.openknowledge.common.domain.ObjectMother.USER_IDENTIFIER;
-import static de.openknowledge.common.domain.ObjectMother.createRoleRepresentations;
+import static de.openknowledge.common.domain.ObjectMother.createUserAccount;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+
+import javax.ws.rs.NotFoundException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,7 +56,6 @@ import de.openknowledge.authentication.domain.KeycloakAdapter;
 import de.openknowledge.authentication.domain.KeycloakServiceConfiguration;
 import de.openknowledge.authentication.domain.RealmName;
 import de.openknowledge.authentication.domain.group.GroupName;
-import de.openknowledge.authentication.domain.token.Token;
 import de.openknowledge.authentication.domain.role.RoleName;
 import de.openknowledge.common.domain.MockResponse;
 
@@ -70,35 +69,18 @@ public class KeycloakUserServiceTest {
   private UsersResource usersResource;
 
   @Mock
-  private RolesResource rolesResource;
-
-  @Mock
   private UserResource userResource;
-
-  @Mock
-  private RoleMappingResource roleMappingResource;
-
-  @Mock
-  private RoleScopeResource roleScopeResource;
 
   private KeycloakUserService service;
 
-  private KeycloakServiceConfiguration serviceConfiguration;
-
   private UserAccount account;
-
-  private Token token;
-
-  private List<RoleRepresentation> roleRepresentations;
 
   @BeforeEach
   void setup() {
-    account = new UserAccount(USERNAME, MAIL_ADDRESS, PASSWORD);
-    token = new Token(USERNAME, USER_IDENTIFIER, MAIL_ADDRESS, ISSUER, 5, TimeUnit.MINUTES);
-    roleRepresentations = createRoleRepresentations();
-    serviceConfiguration = new KeycloakServiceConfiguration(REALM_NAME.getValue(), CLIENT_ID.getValue());
-    service = new KeycloakUserService(keycloakAdapter,
-        serviceConfiguration);
+    account = createUserAccount(Boolean.FALSE);
+    KeycloakServiceConfiguration serviceConfiguration = new KeycloakServiceConfiguration(REALM_NAME.getValue(), CLIENT_ID.getValue());
+    service = new KeycloakUserService(keycloakAdapter, serviceConfiguration);
+    service.init();
   }
 
   @Test
@@ -158,9 +140,33 @@ public class KeycloakUserServiceTest {
   }
 
   @Test
+  void returnsValidOnGetUser() {
+    UserRepresentation keyCloakUser = new UserRepresentation();
+    keyCloakUser.setId(USER_IDENTIFIER.getValue());
+    keyCloakUser.setUsername(USERNAME.getValue());
+    keyCloakUser.setEmail(MAIL_ADDRESS.getValue());
+    doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
+    doReturn(userResource).when(usersResource).get(USER_IDENTIFIER.getValue());
+    doReturn(keyCloakUser).when(userResource).toRepresentation();
+    UserAccount account = service.getUser(USER_IDENTIFIER);
+    assertThat(account.getIdentifier()).isEqualTo(USER_IDENTIFIER);
+    assertThat(account.getUsername()).isEqualTo(USERNAME);
+  }
+
+  @Test
+  void returnsNotFoundOnGetUser() {
+    UserIdentifier userIdentifier = UserIdentifier.fromValue("47110815");
+    doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
+    doThrow(new NotFoundException()).when(usersResource).get(userIdentifier.getValue());
+
+    assertThrows(UserNotFoundException.class, () -> {
+      service.getUser(userIdentifier);
+    });
+  }
+
+  @Test
   void updateMailVerification() {
     UserRepresentation keyCloakUser = new UserRepresentation();
-    UserResource userResource = mock(UserResource.class);
     doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
     doReturn(userResource).when(usersResource).get(USER_IDENTIFIER.getValue());
     doReturn(keyCloakUser).when(userResource).toRepresentation();

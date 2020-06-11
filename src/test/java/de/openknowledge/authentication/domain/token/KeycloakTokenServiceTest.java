@@ -17,19 +17,12 @@ package de.openknowledge.authentication.domain.token;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import static de.openknowledge.common.domain.ObjectMother.ISSUER;
-import static de.openknowledge.common.domain.ObjectMother.MAIL_ADDRESS;
-import static de.openknowledge.common.domain.ObjectMother.USERNAME;
-import static de.openknowledge.common.domain.ObjectMother.USER_IDENTIFIER;
-
-import java.util.concurrent.TimeUnit;
+import static de.openknowledge.common.domain.ObjectMother.createToken;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import de.openknowledge.authentication.domain.KeycloakKeyConfiguration;
 
 @ExtendWith(MockitoExtension.class)
 public class KeycloakTokenServiceTest {
@@ -42,7 +35,7 @@ public class KeycloakTokenServiceTest {
 
   @BeforeEach
   void setup() {
-    token = new Token(USERNAME, USER_IDENTIFIER, MAIL_ADDRESS, ISSUER, 5, TimeUnit.MINUTES);
+    token = createToken();
     KeycloakKeyConfiguration configuration = createKeyConfig();
     service = new KeycloakTokenService(configuration);
     service.init();
