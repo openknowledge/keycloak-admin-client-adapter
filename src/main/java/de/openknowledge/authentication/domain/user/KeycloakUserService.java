@@ -107,7 +107,7 @@ public class KeycloakUserService {
     }
   }
 
-  public void updateMailVerification(UserIdentifier userIdentifier) {
+  public void updateMailVerification(UserIdentifier userIdentifier) throws UserNotFoundException {
     try {
       UserResource userResource = keycloakAdapter.findUserResource(getRealmName()).get(userIdentifier.getValue());
       UserRepresentation user = userResource.toRepresentation();
@@ -118,7 +118,7 @@ public class KeycloakUserService {
     }
   }
 
-  public void joinGroups(UserIdentifier userIdentifier, GroupName... groupNames) {
+  public void joinGroups(UserIdentifier userIdentifier, GroupName... groupNames) throws UserNotFoundException {
     RealmName realmName = getRealmName();
     GroupsResource resource = keycloakAdapter.findGroupResource(realmName);
     List<GroupId> joiningGroups = new ArrayList<>();
@@ -130,13 +130,17 @@ public class KeycloakUserService {
         joiningGroups.addAll(groups.stream().map(group -> GroupId.fromValue(group.getId())).collect(Collectors.toList()));
       }
     }
-    UserResource userResource = keycloakAdapter.findUserResource(realmName).get(userIdentifier.getValue());
-    for (GroupId groupId : joiningGroups) {
-      userResource.joinGroup(groupId.getValue());
+    try {
+      UserResource userResource = keycloakAdapter.findUserResource(realmName).get(userIdentifier.getValue());
+      for (GroupId groupId : joiningGroups) {
+        userResource.joinGroup(groupId.getValue());
+      }
+    } catch (NotFoundException e) {
+      throw new UserNotFoundException(userIdentifier);
     }
   }
 
-  public void joinRoles(UserIdentifier userIdentifier, RoleName... roleNames) {
+  public void joinRoles(UserIdentifier userIdentifier, RoleName... roleNames) throws UserNotFoundException {
     RealmName realmName = getRealmName();
     RolesResource resource = keycloakAdapter.findRoleResource(realmName);
     List<RoleRepresentation> joiningRoles = new ArrayList<>();
@@ -148,8 +152,12 @@ public class KeycloakUserService {
         joiningRoles.addAll(roles);
       }
     }
-    UserResource userResource = keycloakAdapter.findUserResource(realmName).get(userIdentifier.getValue());
-    userResource.roles().realmLevel().add(joiningRoles);
+    try {
+      UserResource userResource = keycloakAdapter.findUserResource(realmName).get(userIdentifier.getValue());
+      userResource.roles().realmLevel().add(joiningRoles);
+    } catch (NotFoundException e) {
+      throw new UserNotFoundException(userIdentifier);
+    }
   }
 
   private UserRepresentation extractUser(UserAccount userAccount, EmailVerifiedMode mode) {
