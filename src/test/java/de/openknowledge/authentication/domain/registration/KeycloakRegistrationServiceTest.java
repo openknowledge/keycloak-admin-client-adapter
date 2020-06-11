@@ -24,14 +24,12 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import static de.openknowledge.common.domain.ObjectMother.CLIENT_ID;
 import static de.openknowledge.common.domain.ObjectMother.ISSUER;
-import static de.openknowledge.common.domain.ObjectMother.MAIL_ADDRESS;
-import static de.openknowledge.common.domain.ObjectMother.PASSWORD;
 import static de.openknowledge.common.domain.ObjectMother.REALM_NAME;
 import static de.openknowledge.common.domain.ObjectMother.USERNAME;
 import static de.openknowledge.common.domain.ObjectMother.USER_IDENTIFIER;
 import static de.openknowledge.common.domain.ObjectMother.VERIFICATION_LINK;
-
-import java.util.concurrent.TimeUnit;
+import static de.openknowledge.common.domain.ObjectMother.createToken;
+import static de.openknowledge.common.domain.ObjectMother.createUserAccount;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,7 +44,6 @@ import de.openknowledge.authentication.domain.token.Token;
 import de.openknowledge.authentication.domain.user.EmailVerifiedMode;
 import de.openknowledge.authentication.domain.user.KeycloakUserService;
 import de.openknowledge.authentication.domain.user.UserAccount;
-import de.openknowledge.authentication.domain.user.UserAccountAdapter;
 import de.openknowledge.authentication.domain.user.UserCreationFailedException;
 import de.openknowledge.authentication.domain.user.UserIdentifier;
 
@@ -67,32 +64,17 @@ public class KeycloakRegistrationServiceTest {
 
   @BeforeEach
   void setup() {
-    account = new UserAccountAdapter(USERNAME, MAIL_ADDRESS, PASSWORD, USER_IDENTIFIER);
-    token = new Token(USERNAME, USER_IDENTIFIER, MAIL_ADDRESS, ISSUER, 5, TimeUnit.MINUTES);
+    account = createUserAccount(Boolean.TRUE);
+    token = createToken();
     KeycloakServiceConfiguration serviceConfiguration = new KeycloakServiceConfiguration(REALM_NAME.getValue(), CLIENT_ID.getValue());
+    KeycloakRegistrationServiceConfiguration registrationServiceConfiguration = new KeycloakRegistrationServiceConfiguration(
+        RegistrationMode.DOUBLE_OPT_IN.name(), RegistrationRequirement.ROLE.name(), "5", "MINUTES");
     service = new KeycloakRegistrationService(serviceConfiguration,
+        registrationServiceConfiguration,
         keycloakUserService,
-        keycloakTokenService,
-        RegistrationMode.DOUBLE_OPT_IN.name(),
-        RegistrationRequirement.ROLE.name(),
-        "5", "MINUTES");
+        keycloakTokenService);
+    service.init();
   }
-
-  /*@Test
-  void falseForCheckAlreadyExists() {
-    doReturn(usersResource).when(keycloakAdapter).findUserResource(RealmName.fromValue("realmName"));
-    doReturn(new ArrayList<>()).when(usersResource).search(account.getUsername().getValue());
-    Boolean result = service.checkAlreadyExist(account);
-    assertThat(result).isFalse();
-  }
-
-  @Test
-  void trueForCheckAlreadyExists() {
-    doReturn(usersResource).when(keycloakAdapter).findUserResource(RealmName.fromValue("realmName"));
-    doReturn(Collections.singletonList(new UserRepresentation())).when(usersResource).search(account.getUsername().getValue());
-    Boolean result = service.checkAlreadyExist(account);
-    assertThat(result).isTrue();
-  }*/
 
   @Test
   void returnValidOnCreateUser() {

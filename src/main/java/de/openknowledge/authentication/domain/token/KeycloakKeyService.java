@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package de.openknowledge.authentication.domain;
+package de.openknowledge.authentication.domain.token;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -52,7 +52,15 @@ public class KeycloakKeyService {
 
   private static final List<String> IGNORED_LINES = Arrays.asList(BEGIN_PUBLIC_KEY, END_PUBLIC_KEY, BEGIN_PRIVATE_KEY, END_PRIVATE_KEY);
 
+  /**
+   * Read the key pair from the configured public and private key file names which must be available as resource from this class.
+   * @param config - The key service configuration
+   * @return The read key pair from the file system
+   */
   public static KeyPair readKeyPair(KeycloakKeyConfiguration config) {
+    // validate configuration before start processing
+    config.validate();
+    // start processing
     PublicKey publicKey = null;
     String publicKeyContent = readFromFile(config.getFilenamePublicKey());
     LOG.debug("read public key content\n{}", publicKeyContent);
@@ -74,7 +82,16 @@ public class KeycloakKeyService {
     return new KeyPair(publicKey, privateKey);
   }
 
+  /**
+   * Generates a new key pair with the configured algorithm and writes it to the configured public and private key file names
+   * with must be available as resource from this class.
+   * @param config - The key service configuration
+   * @return The new generated key pair
+   */
   public static KeyPair generateKeyPair(KeycloakKeyConfiguration config) {
+    // validate configuration before start processing
+    config.validate();
+    // start processing
     try {
       KeyPairGenerator generator = KeyPairGenerator.getInstance(config.getAlgorithm());
       generator.initialize(2048);

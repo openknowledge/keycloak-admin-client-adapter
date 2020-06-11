@@ -20,7 +20,7 @@ public enum RegistrationRequirement {
 
   public static RegistrationRequirement fromValue(String value) {
     for (RegistrationRequirement mode : values()) {
-      if (mode.name().equals(value.toUpperCase())) {
+      if (mode.name().equalsIgnoreCase(value)) {
         return mode;
       }
     }

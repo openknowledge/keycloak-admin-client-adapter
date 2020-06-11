@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import static de.openknowledge.common.domain.ObjectMother.CLIENT_ID;
 import static de.openknowledge.common.domain.ObjectMother.REALM_NAME;
+import static de.openknowledge.common.domain.ObjectMother.createLogin;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,8 +34,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.openknowledge.authentication.domain.KeycloakAdapter;
 import de.openknowledge.authentication.domain.KeycloakServiceConfiguration;
-import de.openknowledge.authentication.domain.Password;
-import de.openknowledge.authentication.domain.Username;
 
 @ExtendWith(MockitoExtension.class)
 public class KeycloakLoginServiceTest {
@@ -56,7 +55,7 @@ public class KeycloakLoginServiceTest {
   @Mock
   private AccessTokenResponse response;
 
-  private KeycloakLoginService keycloakLoginService;
+  private KeycloakLoginService service;
 
   private Login login;
 
@@ -64,10 +63,11 @@ public class KeycloakLoginServiceTest {
 
   @BeforeEach
   void setup() {
-    login = new Login(Username.fromValue("test.user"), Password.fromValue("Test1234"));
+    login = createLogin();
     refreshToken = RefreshToken.fromValue("ABC-123");
     KeycloakServiceConfiguration serviceConfiguration = new KeycloakServiceConfiguration(REALM_NAME.getValue(), CLIENT_ID.getValue());
-    keycloakLoginService = new KeycloakLoginService(keycloakAdapter, serviceConfiguration);
+    service = new KeycloakLoginService(keycloakAdapter, serviceConfiguration);
+    service.init();
     response = createResponse();
   }
 
@@ -75,7 +75,7 @@ public class KeycloakLoginServiceTest {
   void login() {
     when(keycloakAdapter.getTokenService()).thenReturn(tokenService);
     when(tokenService.grantToken(eq("realmName"), any())).thenReturn(response);
-    LoginToken loginToken = keycloakLoginService.login(login);
+    LoginToken loginToken = service.login(login);
     assertThat(loginToken.getToken()).isEqualTo(TOKEN);
     assertThat(loginToken.getExpiresIn()).isEqualTo(EXPIRES_IN);
     assertThat(loginToken.getRefreshToken()).isEqualTo(REFRESH_TOKEN);
@@ -86,7 +86,7 @@ public class KeycloakLoginServiceTest {
   void refresh() {
     when(keycloakAdapter.getTokenService()).thenReturn(tokenService);
     when(tokenService.refreshToken(eq("realmName"), any())).thenReturn(response);
-    LoginToken loginToken = keycloakLoginService.refresh(refreshToken);
+    LoginToken loginToken = service.refresh(refreshToken);
     assertThat(loginToken.getToken()).isEqualTo(TOKEN);
     assertThat(loginToken.getExpiresIn()).isEqualTo(EXPIRES_IN);
     assertThat(loginToken.getRefreshToken()).isEqualTo(REFRESH_TOKEN);
