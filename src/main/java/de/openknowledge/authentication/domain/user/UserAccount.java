@@ -28,6 +28,16 @@ public class UserAccount {
 
   private Name name;
 
+  private Boolean emailVerified;
+
+  /**
+   * UserAccount for user in keycloak with email address and password
+   * @param theEmailAddress - the keycloak email address and the username
+   */
+  public UserAccount(EmailAddress theEmailAddress) {
+    this(Username.fromValue(theEmailAddress.getValue()), theEmailAddress, null);
+  }
+
   /**
    * UserAccount for user in keycloak with email address and password
    * @param theEmailAddress - the keycloak email address and the username
@@ -48,12 +58,16 @@ public class UserAccount {
     emailAddress = theEmailAddress;
     password = thePassword;
     attributes = new ArrayList<>();
+    emailVerified = Boolean.FALSE;
   }
 
   UserAccount(UserRepresentation user) {
     this(Username.fromValue(user.getUsername()), EmailAddress.fromValue(user.getEmail()), null);
     setIdentifier(UserIdentifier.fromValue(user.getId()));
     createName(user);
+    if (user.isEmailVerified() != null && user.isEmailVerified()) {
+      emailVerified();
+    }
   }
 
   public Token asToken(Issuer issuer) {
@@ -88,6 +102,10 @@ public class UserAccount {
     return name;
   }
 
+  public Boolean getEmailVerified() {
+    return emailVerified;
+  }
+
   public List<Attribute> getAttributes() {
     return attributes;
   }
@@ -107,6 +125,10 @@ public class UserAccount {
     attributes.add(theAttribute);
   }
 
+  public void emailVerified() {
+    emailVerified = Boolean.TRUE;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -121,12 +143,13 @@ public class UserAccount {
         Objects.equals(getPassword(), that.getPassword()) &&
         Objects.equals(getEmailAddress(), that.getEmailAddress()) &&
         Objects.equals(getName(), that.getName()) &&
+        Objects.equals(getEmailVerified(), that.getEmailVerified()) &&
         Objects.equals(getAttributes(), that.getAttributes());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getIdentifier(), getUsername(), getPassword(), getEmailAddress(), getName(), getAttributes());
+    return Objects.hash(getIdentifier(), getUsername(), getPassword(), getEmailAddress(), getName(), getEmailVerified(), getAttributes());
   }
 
   @Override
@@ -136,6 +159,7 @@ public class UserAccount {
         + ", username=" + username
         + ", password=******"
         + ", emailAddress=" + emailAddress
+        + ", emailVerified=" + emailVerified
         + ", name=" + name
         + ", attributes=" + attributes
         + "}";

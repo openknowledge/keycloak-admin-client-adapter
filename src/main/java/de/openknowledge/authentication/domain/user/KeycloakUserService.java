@@ -83,7 +83,7 @@ public class KeycloakUserService {
 
   public UserAccount createUser(UserAccount userAccount, EmailVerifiedMode mode) throws UserCreationFailedException {
     UserRepresentation newUser = extractUser(userAccount, mode);
-    newUser.setCredentials(Collections.singletonList(extractCredential(userAccount)));
+    newUser.setCredentials(extractCredential(userAccount));
     newUser.setAttributes(extractAttributes(userAccount));
     Response response = keycloakAdapter.findUserResource(getRealmName()).create(newUser);
     if (response.getStatus() != 201) {
@@ -178,17 +178,22 @@ public class KeycloakUserService {
       keycloakUser.setEmailVerified(false);
     } else if (EmailVerifiedMode.DEFAULT.equals(mode)) {
       keycloakUser.setEmailVerified(true);
+      userAccount.emailVerified();
     }
 
     return keycloakUser;
   }
 
-  private CredentialRepresentation extractCredential(UserAccount userAccount) {
-    CredentialRepresentation credential = new CredentialRepresentation();
-    credential.setValue(userAccount.getPassword().getValue());
-    credential.setType(CredentialRepresentation.PASSWORD);
-    credential.setTemporary(false);
-    return credential;
+  private List<CredentialRepresentation> extractCredential(UserAccount userAccount) {
+    if (userAccount.getPassword() != null) {
+      CredentialRepresentation credential = new CredentialRepresentation();
+      credential.setValue(userAccount.getPassword().getValue());
+      credential.setType(CredentialRepresentation.PASSWORD);
+      credential.setTemporary(false);
+      return Collections.singletonList(credential);
+    } else {
+      return null;
+    }
   }
 
   private Map<String, List<String>> extractAttributes(UserAccount userAccount) {
