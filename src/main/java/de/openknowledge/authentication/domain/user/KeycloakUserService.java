@@ -39,6 +39,7 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.openknowledge.authentication.domain.ClientId;
 import de.openknowledge.authentication.domain.KeycloakAdapter;
 import de.openknowledge.authentication.domain.KeycloakServiceConfiguration;
 import de.openknowledge.authentication.domain.RealmName;
@@ -46,6 +47,7 @@ import de.openknowledge.authentication.domain.error.ResponseErrorMessage;
 import de.openknowledge.authentication.domain.group.GroupId;
 import de.openknowledge.authentication.domain.group.GroupName;
 import de.openknowledge.authentication.domain.role.RoleName;
+import de.openknowledge.authentication.domain.role.RoleType;
 
 @ApplicationScoped
 public class KeycloakUserService {
@@ -121,19 +123,9 @@ public class KeycloakUserService {
   }
 
   public void joinGroups(UserIdentifier userIdentifier, GroupName... groupNames) throws UserNotFoundException {
-    RealmName realmName = getRealmName();
-    GroupsResource resource = keycloakAdapter.findGroupResource(realmName);
-    List<GroupId> joiningGroups = new ArrayList<>();
-    for (GroupName groupName : groupNames) {
-      List<GroupRepresentation> groups = resource.groups(groupName.getValue(), 0, 1);
-      if (groups == null || groups.isEmpty()) {
-        LOG.warn("Group (name='{}') not found", groupName.getValue());
-      } else {
-        joiningGroups.addAll(groups.stream().map(group -> GroupId.fromValue(group.getId())).collect(Collectors.toList()));
-      }
-    }
+    List<GroupId> joiningGroups = findGroupIds(groupNames);
     try {
-      UserResource userResource = keycloakAdapter.findUserResource(realmName).get(userIdentifier.getValue());
+      UserResource userResource = keycloakAdapter.findUserResource(getRealmName()).get(userIdentifier.getValue());
       for (GroupId groupId : joiningGroups) {
         userResource.joinGroup(groupId.getValue());
       }
@@ -142,21 +134,51 @@ public class KeycloakUserService {
     }
   }
 
-  public void joinRoles(UserIdentifier userIdentifier, RoleName... roleNames) throws UserNotFoundException {
-    RealmName realmName = getRealmName();
-    RolesResource resource = keycloakAdapter.findRoleResource(realmName);
-    List<RoleRepresentation> joiningRoles = new ArrayList<>();
-    for (RoleName roleName : roleNames) {
-      List<RoleRepresentation> roles = resource.list(roleName.getValue(), 0, 1);
-      if (roles == null || roles.isEmpty()) {
-        LOG.warn("Role (name='{}') not found", roleName.getValue());
-      } else {
-        joiningRoles.addAll(roles);
-      }
-    }
+  public void leaveGroups(UserIdentifier userIdentifier, GroupName... groupNames) throws UserNotFoundException {
+    List<GroupId> leavingGroups = findGroupIds(groupNames);
     try {
-      UserResource userResource = keycloakAdapter.findUserResource(realmName).get(userIdentifier.getValue());
-      userResource.roles().realmLevel().add(joiningRoles);
+      UserResource userResource = keycloakAdapter.findUserResource(getRealmName()).get(userIdentifier.getValue());
+      for (GroupId groupId : leavingGroups) {
+        userResource.leaveGroup(groupId.getValue());
+      }
+    } catch (NotFoundException e) {
+      throw new UserNotFoundException(userIdentifier);
+    }
+  }
+
+  public void joinRoles(UserIdentifier userIdentifier, RoleType roleType, RoleName... roleNames) throws UserNotFoundException {
+    List<RoleRepresentation> joiningRoles = findRoles(getRolesResource(roleType), roleNames);
+    try {
+      UserResource userResource = keycloakAdapter.findUserResource(getRealmName()).get(userIdentifier.getValue());
+      switch (roleType) {
+        case REALM:
+          userResource.roles().realmLevel().add(joiningRoles);
+          break;
+        case CLIENT:
+          userResource.roles().clientLevel(getClientId().getValue()).add(joiningRoles);
+          break;
+        default:
+          throw new IllegalArgumentException("unsupported roleType " + roleType);
+      }
+    } catch (NotFoundException e) {
+      throw new UserNotFoundException(userIdentifier);
+    }
+  }
+
+  public void leaveRoles(UserIdentifier userIdentifier, RoleType roleType, RoleName... roleNames) throws UserNotFoundException {
+    List<RoleRepresentation> leavingRoles = findRoles(getRolesResource(roleType), roleNames);
+    try {
+      UserResource userResource = keycloakAdapter.findUserResource(getRealmName()).get(userIdentifier.getValue());
+      switch (roleType) {
+        case REALM:
+          userResource.roles().realmLevel().remove(leavingRoles);
+          break;
+        case CLIENT:
+          userResource.roles().clientLevel(getClientId().getValue()).remove(leavingRoles);
+          break;
+        default:
+          throw new IllegalArgumentException("unsupported roleType " + roleType);
+      }
     } catch (NotFoundException e) {
       throw new UserNotFoundException(userIdentifier);
     }
@@ -213,8 +235,51 @@ public class KeycloakUserService {
     return userAttributeMap;
   }
 
+  private List<GroupId> findGroupIds(GroupName... groupNames) {
+    GroupsResource resource = keycloakAdapter.findGroupResource(getRealmName());
+    List<GroupId> searchedGroups = new ArrayList<>();
+    for (GroupName groupName : groupNames) {
+      List<GroupRepresentation> groups = resource.groups(groupName.getValue(), 0, 1);
+      if (groups == null || groups.isEmpty()) {
+        LOG.warn("Group (name='{}') not found", groupName.getValue());
+      } else {
+        searchedGroups.addAll(groups.stream().map(group -> GroupId.fromValue(group.getId())).collect(Collectors.toList()));
+      }
+    }
+    return searchedGroups;
+  }
+
+  private List<RoleRepresentation> findRoles(RolesResource resource, RoleName... roleNames) {
+    List<RoleRepresentation> searchedRoles = new ArrayList<>();
+    for (RoleName roleName : roleNames) {
+      List<RoleRepresentation> roles = resource.list(roleName.getValue(), 0, 1);
+      if (roles == null || roles.isEmpty()) {
+        LOG.warn("Role (name='{}') not found", roleName.getValue());
+      } else {
+        searchedRoles.addAll(roles);
+      }
+    }
+    return searchedRoles;
+  }
+
+  private RolesResource getRolesResource(RoleType roleType) {
+    RealmName realmName = getRealmName();
+    switch (roleType) {
+      case REALM:
+        return keycloakAdapter.findRealmRolesResource(realmName);
+      case CLIENT:
+        return keycloakAdapter.findClientRolesResource(realmName, getClientId());
+      default:
+        throw new IllegalArgumentException("unsupported roleType " + roleType);
+    }
+  }
+
   private RealmName getRealmName() {
     return RealmName.fromValue(serviceConfiguration.getRealm());
+  }
+
+  private ClientId getClientId() {
+    return ClientId.fromValue(serviceConfiguration.getClientId());
   }
 
 }

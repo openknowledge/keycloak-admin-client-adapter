@@ -24,6 +24,8 @@ import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
+import org.keycloak.admin.client.resource.ClientResource;
+import org.keycloak.admin.client.resource.ClientsResource;
 import org.keycloak.admin.client.resource.GroupsResource;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.RealmsResource;
@@ -63,19 +65,32 @@ public class KeycloakAdapter {
     return realmsResource.findAll();
   }
 
+  public RealmResource findRealmResource(RealmName realmName) {
+    return keycloak.realm(realmName.getValue());
+  }
+
+  public ClientResource findClientResource(RealmName realmName, ClientId clientId) {
+    ClientsResource clientsResource = findRealmResource(realmName).clients();
+    return clientsResource.get(clientId.getValue());
+  }
+
   public UsersResource findUserResource(RealmName realmName) {
-    RealmResource realmResource = keycloak.realm(realmName.getValue());
+    RealmResource realmResource = findRealmResource(realmName);
     return realmResource.users();
   }
 
   public GroupsResource findGroupResource(RealmName realmName) {
-    RealmResource realmResource = keycloak.realm(realmName.getValue());
+    RealmResource realmResource = findRealmResource(realmName);
     return realmResource.groups();
   }
 
-  public RolesResource findRoleResource(RealmName realmName) {
-    RealmResource realmResource = keycloak.realm(realmName.getValue());
+  public RolesResource findRealmRolesResource(RealmName realmName) {
+    RealmResource realmResource = findRealmResource(realmName);
     return realmResource.roles();
+  }
+
+  public RolesResource findClientRolesResource(RealmName realmName, ClientId clientId) {
+    return findClientResource(realmName, clientId).roles();
   }
 
   public TokenService getTokenService() {

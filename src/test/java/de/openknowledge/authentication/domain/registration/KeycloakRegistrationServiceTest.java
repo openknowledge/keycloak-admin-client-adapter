@@ -39,6 +39,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.openknowledge.authentication.domain.KeycloakServiceConfiguration;
 import de.openknowledge.authentication.domain.role.RoleName;
+import de.openknowledge.authentication.domain.role.RoleType;
 import de.openknowledge.authentication.domain.token.KeycloakTokenService;
 import de.openknowledge.authentication.domain.token.Token;
 import de.openknowledge.authentication.domain.user.EmailVerifiedMode;
@@ -83,7 +84,7 @@ public class KeycloakRegistrationServiceTest {
     // createUser
     doReturn(account).when(keycloakUserService).createUser(account, EmailVerifiedMode.REQUIRED);
     // joinRoles
-    doNothing().when(keycloakUserService).joinRoles(USER_IDENTIFIER, RoleName.fromValue(CLIENT_ID.getValue()));
+    doNothing().when(keycloakUserService).joinRoles(USER_IDENTIFIER, RoleType.REALM, RoleName.fromValue(CLIENT_ID.getValue()));
     UserAccount response = service.register(account);
     assertThat(response.getIdentifier()).isEqualTo(USER_IDENTIFIER);
     verifyNoMoreInteractions(keycloakUserService, keycloakTokenService);
