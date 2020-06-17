@@ -123,7 +123,7 @@ public class KeycloakRegistrationServiceTest {
     // checkUserExists
     doReturn(Boolean.FALSE).when(keycloakUserService).checkAlreadyExist(account);
     // createUser
-    UserCreationFailedException exception = new UserCreationFailedException(USERNAME.getValue(), 409);
+    UserCreationFailedException exception = new UserCreationFailedException(USERNAME.getValue(), 409, "User already exists");
     doThrow(exception).when(keycloakUserService).createUser(account, EmailVerifiedMode.REQUIRED);
     // joinRoles
     assertThrows(RegistrationFailedException.class, () -> {

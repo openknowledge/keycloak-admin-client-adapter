@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import de.openknowledge.authentication.domain.KeycloakAdapter;
 import de.openknowledge.authentication.domain.KeycloakServiceConfiguration;
 import de.openknowledge.authentication.domain.RealmName;
+import de.openknowledge.authentication.domain.error.ResponseErrorMessage;
 import de.openknowledge.authentication.domain.group.GroupId;
 import de.openknowledge.authentication.domain.group.GroupName;
 import de.openknowledge.authentication.domain.role.RoleName;
@@ -87,7 +88,8 @@ public class KeycloakUserService {
     newUser.setAttributes(extractAttributes(userAccount));
     Response response = keycloakAdapter.findUserResource(getRealmName()).create(newUser);
     if (response.getStatus() != 201) {
-      throw new UserCreationFailedException(newUser.getUsername(), response.getStatus());
+      ResponseErrorMessage message = response.readEntity(ResponseErrorMessage.class);
+      throw new UserCreationFailedException(newUser.getUsername(), response.getStatus(), message.getErrorMessage());
     }
     String path = response.getLocation().getPath();
     String userId = path.replaceAll(".*/([^/]+)$", "$1");
