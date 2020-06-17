@@ -57,6 +57,7 @@ import de.openknowledge.authentication.domain.KeycloakServiceConfiguration;
 import de.openknowledge.authentication.domain.RealmName;
 import de.openknowledge.authentication.domain.group.GroupName;
 import de.openknowledge.authentication.domain.role.RoleName;
+import de.openknowledge.authentication.domain.role.RoleType;
 import de.openknowledge.common.domain.MockResponse;
 
 @ExtendWith(MockitoExtension.class)
@@ -210,14 +211,14 @@ public class KeycloakUserServiceTest {
     UserResource userResource = mock(UserResource.class);
     RoleMappingResource roleMappingResource = mock(RoleMappingResource.class);
     RoleScopeResource roleScopeResource = mock(RoleScopeResource.class);
-    doReturn(rolesResource).when(keycloakAdapter).findRoleResource(REALM_NAME);
+    doReturn(rolesResource).when(keycloakAdapter).findRealmRolesResource(REALM_NAME);
     doReturn(Collections.singletonList(roleRepresentation)).when(rolesResource).list("ROLE", 0, 1);
     doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
     doReturn(userResource).when(usersResource).get(USER_IDENTIFIER.getValue());
     doReturn(roleMappingResource).when(userResource).roles();
     doReturn(roleScopeResource).when(roleMappingResource).realmLevel();
     doNothing().when(roleScopeResource).add(Collections.singletonList(roleRepresentation));
-    service.joinRoles(USER_IDENTIFIER, RoleName.fromValue("ROLE"));
+    service.joinRoles(USER_IDENTIFIER, RoleType.REALM, RoleName.fromValue("ROLE"));
     verifyNoMoreInteractions(userResource, usersResource, rolesResource, roleMappingResource, roleScopeResource);
   }
 
@@ -227,14 +228,14 @@ public class KeycloakUserServiceTest {
     UserResource userResource = mock(UserResource.class);
     RoleMappingResource roleMappingResource = mock(RoleMappingResource.class);
     RoleScopeResource roleScopeResource = mock(RoleScopeResource.class);
-    doReturn(rolesResource).when(keycloakAdapter).findRoleResource(REALM_NAME);
+    doReturn(rolesResource).when(keycloakAdapter).findRealmRolesResource(REALM_NAME);
     doReturn(Collections.emptyList()).when(rolesResource).list("ROLE", 0, 1);
     doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
     doReturn(userResource).when(usersResource).get(USER_IDENTIFIER.getValue());
     doReturn(roleMappingResource).when(userResource).roles();
     doReturn(roleScopeResource).when(roleMappingResource).realmLevel();
     doNothing().when(roleScopeResource).add(Collections.emptyList());
-    service.joinRoles(USER_IDENTIFIER, RoleName.fromValue("ROLE"));
+    service.joinRoles(USER_IDENTIFIER, RoleType.REALM, RoleName.fromValue("ROLE"));
     verifyNoMoreInteractions(userResource, usersResource, rolesResource, roleMappingResource, roleScopeResource);
   }
 

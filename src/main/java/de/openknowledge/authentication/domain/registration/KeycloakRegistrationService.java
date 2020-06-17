@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import de.openknowledge.authentication.domain.ClientId;
 import de.openknowledge.authentication.domain.KeycloakServiceConfiguration;
 import de.openknowledge.authentication.domain.role.RoleName;
+import de.openknowledge.authentication.domain.role.RoleType;
 import de.openknowledge.authentication.domain.token.KeycloakTokenService;
 import de.openknowledge.authentication.domain.token.Token;
 import de.openknowledge.authentication.domain.token.VerificationLink;
@@ -95,7 +96,7 @@ public class KeycloakRegistrationService {
     if (isRoleRequired()) {
       // client id as role to access client (because: required role extension)
       ClientId clientId = ClientId.fromValue(serviceConfiguration.getClientId());
-      keycloakUserService.joinRoles(newUserAccount.getIdentifier(), RoleName.fromValue(clientId.getValue()));
+      keycloakUserService.joinRoles(newUserAccount.getIdentifier(), RoleType.REALM, RoleName.fromValue(clientId.getValue()));
     }
 
     return userAccount;
