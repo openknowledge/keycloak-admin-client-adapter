@@ -31,6 +31,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 
+import de.openknowledge.authentication.domain.error.ResponseErrorMessage;
 import de.openknowledge.authentication.domain.user.UserIdentifier;
 
 public class MockResponse extends Response {
@@ -61,7 +62,9 @@ public class MockResponse extends Response {
 
   @Override
   public <T> T readEntity(Class<T> entityType) {
-    return null;
+    ResponseErrorMessage errorMessage = new ResponseErrorMessage();
+    errorMessage.setErrorMessage("User already exists");
+    return (T) errorMessage;
   }
 
   @Override

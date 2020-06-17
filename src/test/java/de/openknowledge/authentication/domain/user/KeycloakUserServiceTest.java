@@ -133,7 +133,6 @@ public class KeycloakUserServiceTest {
   void returnInvalidOnCreateUser() {
     doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
     doReturn(new MockResponse(409, USER_IDENTIFIER)).when(usersResource).create(any(UserRepresentation.class));
-
     assertThrows(UserCreationFailedException.class, () -> {
       service.createUser(account, EmailVerifiedMode.REQUIRED);
     });
@@ -158,7 +157,6 @@ public class KeycloakUserServiceTest {
     UserIdentifier userIdentifier = UserIdentifier.fromValue("47110815");
     doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
     doThrow(new NotFoundException()).when(usersResource).get(userIdentifier.getValue());
-
     assertThrows(UserNotFoundException.class, () -> {
       service.getUser(userIdentifier);
     });
