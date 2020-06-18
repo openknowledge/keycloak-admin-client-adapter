@@ -202,7 +202,6 @@ public class KeycloakUserService {
           throw new IllegalArgumentException("unsupported roleType " + roleType);
       }
     } catch (NotFoundException e) {
-      LOG.warn(e.getMessage(), e);
       throw new UserNotFoundException(identifier, e);
     }
   }
