@@ -37,7 +37,7 @@ import de.openknowledge.authentication.domain.user.EmailVerifiedMode;
 import de.openknowledge.authentication.domain.user.KeycloakUserService;
 import de.openknowledge.authentication.domain.user.UserAccount;
 import de.openknowledge.authentication.domain.user.UserCreationFailedException;
-import de.openknowledge.authentication.domain.user.UserIdentifier;
+import de.openknowledge.authentication.domain.UserIdentifier;
 
 @ApplicationScoped
 public class KeycloakRegistrationService {

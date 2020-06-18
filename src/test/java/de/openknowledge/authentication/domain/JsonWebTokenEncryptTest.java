@@ -17,7 +17,6 @@ import de.openknowledge.authentication.domain.token.Token;
 import de.openknowledge.authentication.domain.token.TokenSecret;
 import de.openknowledge.authentication.domain.token.VerificationLink;
 import de.openknowledge.authentication.domain.user.EmailAddress;
-import de.openknowledge.authentication.domain.user.UserIdentifier;
 
 class JsonWebTokenEncryptTest {
 

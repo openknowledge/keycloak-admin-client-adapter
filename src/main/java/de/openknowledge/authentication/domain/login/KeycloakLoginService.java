@@ -32,6 +32,8 @@ import org.slf4j.LoggerFactory;
 
 import de.openknowledge.authentication.domain.KeycloakAdapter;
 import de.openknowledge.authentication.domain.KeycloakServiceConfiguration;
+import de.openknowledge.authentication.domain.RealmName;
+import de.openknowledge.authentication.domain.UserIdentifier;
 
 @ApplicationScoped
 public class KeycloakLoginService {
@@ -73,6 +75,10 @@ public class KeycloakLoginService {
         response.getRefreshToken(), response.getRefreshExpiresIn());
   }
 
+  public void logout(UserIdentifier identifier) {
+    keycloakAdapter.findUsersResource(getRealmName()).get(identifier.getValue()).logout();
+  }
+
   private AccessTokenResponse grantToken(Login login) {
     Form form = new Form().param(GRANT_TYPE, PASSWORD)
         .param(USERNAME, login.getUsername().getValue())
@@ -90,5 +96,9 @@ public class KeycloakLoginService {
     synchronized (this) {
       return keycloakAdapter.getTokenService().refreshToken(serviceConfiguration.getRealm(), form.asMap());
     }
+  }
+
+  private RealmName getRealmName() {
+    return RealmName.fromValue(serviceConfiguration.getRealm());
   }
 }

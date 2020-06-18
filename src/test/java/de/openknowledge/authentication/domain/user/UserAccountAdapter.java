@@ -1,6 +1,7 @@
 package de.openknowledge.authentication.domain.user;
 
 import de.openknowledge.authentication.domain.Password;
+import de.openknowledge.authentication.domain.UserIdentifier;
 import de.openknowledge.authentication.domain.Username;
 
 public class UserAccountAdapter extends UserAccount {

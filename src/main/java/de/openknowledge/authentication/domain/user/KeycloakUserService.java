@@ -42,6 +42,7 @@ import de.openknowledge.authentication.domain.KeycloakAdapter;
 import de.openknowledge.authentication.domain.KeycloakServiceConfiguration;
 import de.openknowledge.authentication.domain.Password;
 import de.openknowledge.authentication.domain.RealmName;
+import de.openknowledge.authentication.domain.UserIdentifier;
 import de.openknowledge.authentication.domain.error.ResponseErrorMessage;
 import de.openknowledge.authentication.domain.group.GroupId;
 import de.openknowledge.authentication.domain.group.GroupName;

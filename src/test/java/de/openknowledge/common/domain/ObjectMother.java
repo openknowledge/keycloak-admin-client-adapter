@@ -32,7 +32,7 @@ import de.openknowledge.authentication.domain.token.VerificationLink;
 import de.openknowledge.authentication.domain.user.EmailAddress;
 import de.openknowledge.authentication.domain.user.UserAccount;
 import de.openknowledge.authentication.domain.user.UserAccountAdapter;
-import de.openknowledge.authentication.domain.user.UserIdentifier;
+import de.openknowledge.authentication.domain.UserIdentifier;
 
 public class ObjectMother {
 

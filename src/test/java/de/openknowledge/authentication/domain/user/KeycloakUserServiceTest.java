@@ -57,6 +57,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import de.openknowledge.authentication.domain.KeycloakAdapter;
 import de.openknowledge.authentication.domain.KeycloakServiceConfiguration;
 import de.openknowledge.authentication.domain.RealmName;
+import de.openknowledge.authentication.domain.UserIdentifier;
 import de.openknowledge.authentication.domain.group.GroupName;
 import de.openknowledge.authentication.domain.role.RoleName;
 import de.openknowledge.authentication.domain.role.RoleType;

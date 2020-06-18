@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import org.keycloak.representations.idm.UserRepresentation;
 
 import de.openknowledge.authentication.domain.Password;
+import de.openknowledge.authentication.domain.UserIdentifier;
 import de.openknowledge.authentication.domain.Username;
 import de.openknowledge.authentication.domain.registration.Issuer;
 import de.openknowledge.authentication.domain.token.Token;

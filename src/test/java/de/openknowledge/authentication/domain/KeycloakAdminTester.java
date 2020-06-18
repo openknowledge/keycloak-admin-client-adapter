@@ -7,6 +7,7 @@ import de.openknowledge.authentication.domain.group.GroupName;
 import de.openknowledge.authentication.domain.login.KeycloakLoginService;
 import de.openknowledge.authentication.domain.login.Login;
 import de.openknowledge.authentication.domain.login.LoginToken;
+import de.openknowledge.authentication.domain.login.RefreshToken;
 import de.openknowledge.authentication.domain.registration.Issuer;
 import de.openknowledge.authentication.domain.registration.KeycloakRegistrationService;
 import de.openknowledge.authentication.domain.registration.KeycloakRegistrationServiceConfiguration;
@@ -22,7 +23,6 @@ import de.openknowledge.authentication.domain.user.KeycloakUserService;
 import de.openknowledge.authentication.domain.user.LastName;
 import de.openknowledge.authentication.domain.user.Name;
 import de.openknowledge.authentication.domain.user.UserAccount;
-import de.openknowledge.authentication.domain.user.UserIdentifier;
 import de.openknowledge.authentication.domain.user.UserNotFoundException;
 
 public class KeycloakAdminTester {
@@ -35,7 +35,6 @@ public class KeycloakAdminTester {
     Username username = Username.fromValue("test.user42");
     EmailAddress emailAddress = EmailAddress.fromValue("test.user42@domain.tld");
     Password password = Password.fromValue("Test1234");
-
 
     KeycloakAdapterConfiguration adapterConfig = createAdapterConfig();
     KeycloakKeyConfiguration keyConfig = createKeyConfig();
@@ -103,7 +102,16 @@ public class KeycloakAdminTester {
     KeycloakLoginService loginService = new KeycloakLoginService(adapter, serviceConfig);
     loginService.init();
     LoginToken loginToken = loginService.login(new Login(username, password));
-    System.out.println(loginToken.getToken());
+    System.out.println("user (id=" + createdUserAccount.getIdentifier() + ") login token " + loginToken);
+
+    LoginToken refreshedLoginToken = loginService.refresh(RefreshToken.fromValue(loginToken.getRefreshToken()));
+    System.out.println("user (id=" + createdUserAccount.getIdentifier() + ") refreshed login token " + refreshedLoginToken);
+
+    loginService.logout(createdUserAccount.getIdentifier());
+    System.out.println("user (id=" + createdUserAccount.getIdentifier() + ") logged out");
+
+    userService.deleteUser(createdUserAccount.getIdentifier());
+    System.out.println("user (id=" + createdUserAccount.getIdentifier() + ") deleted");
   }
 
   private static KeycloakAdapterConfiguration createAdapterConfig() {
