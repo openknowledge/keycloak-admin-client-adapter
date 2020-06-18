@@ -32,7 +32,7 @@ import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 
 import de.openknowledge.authentication.domain.error.ResponseErrorMessage;
-import de.openknowledge.authentication.domain.user.UserIdentifier;
+import de.openknowledge.authentication.domain.UserIdentifier;
 
 public class MockResponse extends Response {
 

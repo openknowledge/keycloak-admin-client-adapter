@@ -34,7 +34,7 @@ import de.openknowledge.authentication.domain.Username;
 import de.openknowledge.authentication.domain.registration.Issuer;
 import de.openknowledge.authentication.domain.registration.RegistrationMode;
 import de.openknowledge.authentication.domain.user.EmailAddress;
-import de.openknowledge.authentication.domain.user.UserIdentifier;
+import de.openknowledge.authentication.domain.UserIdentifier;
 
 class TokenTest {
 

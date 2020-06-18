@@ -32,7 +32,7 @@ import de.openknowledge.authentication.domain.token.VerificationLink;
 import de.openknowledge.authentication.domain.user.EmailAddress;
 import de.openknowledge.authentication.domain.user.UserAccount;
 import de.openknowledge.authentication.domain.user.UserAccountAdapter;
-import de.openknowledge.authentication.domain.user.UserIdentifier;
+import de.openknowledge.authentication.domain.UserIdentifier;
 
 public class ObjectMother {
 
@@ -54,15 +54,16 @@ public class ObjectMother {
   }
 
   public static UserAccount createUserAccount(Boolean withIdentifier, Boolean withEmailVerified) {
+    UserAccount account;
     if (withIdentifier) {
-      UserAccountAdapter account = new UserAccountAdapter(USERNAME, MAIL_ADDRESS, PASSWORD, USER_IDENTIFIER);
-      if (withEmailVerified) {
-        account.emailVerified();
-      }
-      return account;
+      account = new UserAccountAdapter(USERNAME, MAIL_ADDRESS, PASSWORD, USER_IDENTIFIER);
     } else {
-      return new UserAccount(USERNAME, MAIL_ADDRESS, PASSWORD);
+      account = new UserAccountAdapter(USERNAME, MAIL_ADDRESS, PASSWORD, null);
     }
+    if (withEmailVerified) {
+      account.emailVerified();
+    }
+    return account;
   }
 
   public static Token createToken() {

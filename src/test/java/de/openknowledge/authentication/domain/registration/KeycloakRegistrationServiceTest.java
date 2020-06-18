@@ -18,6 +18,7 @@ package de.openknowledge.authentication.domain.registration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -48,7 +49,7 @@ import de.openknowledge.authentication.domain.user.EmailVerifiedMode;
 import de.openknowledge.authentication.domain.user.KeycloakUserService;
 import de.openknowledge.authentication.domain.user.UserAccount;
 import de.openknowledge.authentication.domain.user.UserCreationFailedException;
-import de.openknowledge.authentication.domain.user.UserIdentifier;
+import de.openknowledge.authentication.domain.UserIdentifier;
 
 @ExtendWith(MockitoExtension.class)
 public class KeycloakRegistrationServiceTest {
@@ -86,7 +87,8 @@ public class KeycloakRegistrationServiceTest {
     // createUser
     doReturn(account).when(keycloakUserService).createUser(account, EmailVerifiedMode.REQUIRED);
     // joinRoles
-    doNothing().when(keycloakUserService).joinRoles(USER_IDENTIFIER, RoleType.REALM, RoleName.fromValue(CLIENT_ID.getValue()));
+    RoleName clientAsRole = RoleName.fromValue(CLIENT_ID.getValue().toUpperCase());
+    doNothing().when(keycloakUserService).joinRoles(USER_IDENTIFIER, RoleType.REALM, clientAsRole);
     UserAccount response = service.register(account);
     assertThat(response.getIdentifier()).isEqualTo(USER_IDENTIFIER);
     verifyNoMoreInteractions(keycloakUserService, keycloakTokenService);
@@ -109,7 +111,8 @@ public class KeycloakRegistrationServiceTest {
     // createUser
     doReturn(account).when(keycloakUserService).createUser(account, EmailVerifiedMode.DEFAULT);
     // joinRoles
-    doNothing().when(keycloakUserService).joinRoles(USER_IDENTIFIER, RoleType.REALM, RoleName.fromValue(CLIENT_ID.getValue()));
+    RoleName clientAsRole = RoleName.fromValue(CLIENT_ID.getValue().toUpperCase());
+    doNothing().when(keycloakUserService).joinRoles(USER_IDENTIFIER, RoleType.REALM, clientAsRole);
     // run test
     UserAccount response = noDoubleOptInService.register(account);
     assertThat(response.getIdentifier()).isEqualTo(USER_IDENTIFIER);
@@ -167,7 +170,8 @@ public class KeycloakRegistrationServiceTest {
     // decode token
     doReturn(token).when(keycloakTokenService).decode(VERIFICATION_LINK);
     // update mail verification
-    doNothing().when(keycloakUserService).updateMailVerification(USER_IDENTIFIER);
+    doReturn(account).when(keycloakUserService).getUser(USER_IDENTIFIER);
+    doNothing().when(keycloakUserService).updateUser(eq(account));
     // run test
     UserIdentifier userIdentifier = service.verifyEmailAddress(VERIFICATION_LINK, ISSUER);
     assertThat(userIdentifier).isEqualTo(USER_IDENTIFIER);
