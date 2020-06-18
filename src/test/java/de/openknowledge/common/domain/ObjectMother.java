@@ -50,15 +50,27 @@ public class ObjectMother {
   }
 
   public static UserAccount createUserAccount(Boolean withIdentifier) {
+    return createUserAccount(withIdentifier, Boolean.FALSE);
+  }
+
+  public static UserAccount createUserAccount(Boolean withIdentifier, Boolean withEmailVerified) {
     if (withIdentifier) {
-      return new UserAccountAdapter(USERNAME, MAIL_ADDRESS, PASSWORD, USER_IDENTIFIER);
+      UserAccountAdapter account = new UserAccountAdapter(USERNAME, MAIL_ADDRESS, PASSWORD, USER_IDENTIFIER);
+      if (withEmailVerified) {
+        account.emailVerified();
+      }
+      return account;
     } else {
       return new UserAccount(USERNAME, MAIL_ADDRESS, PASSWORD);
     }
   }
 
   public static Token createToken() {
-    return new Token(USERNAME, USER_IDENTIFIER, MAIL_ADDRESS, ISSUER, 5, TimeUnit.MINUTES);
+    return createToken(5);
+  }
+
+  public static Token createToken(Integer timeToLife) {
+    return new Token(USERNAME, USER_IDENTIFIER, MAIL_ADDRESS, ISSUER, timeToLife, TimeUnit.MINUTES);
   }
 
   public static List<RoleRepresentation> createRoleRepresentations() {

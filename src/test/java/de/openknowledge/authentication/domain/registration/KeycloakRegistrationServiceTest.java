@@ -17,6 +17,7 @@ package de.openknowledge.authentication.domain.registration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -42,6 +43,7 @@ import de.openknowledge.authentication.domain.role.RoleName;
 import de.openknowledge.authentication.domain.role.RoleType;
 import de.openknowledge.authentication.domain.token.KeycloakTokenService;
 import de.openknowledge.authentication.domain.token.Token;
+import de.openknowledge.authentication.domain.token.VerificationLink;
 import de.openknowledge.authentication.domain.user.EmailVerifiedMode;
 import de.openknowledge.authentication.domain.user.KeycloakUserService;
 import de.openknowledge.authentication.domain.user.UserAccount;
@@ -78,7 +80,7 @@ public class KeycloakRegistrationServiceTest {
   }
 
   @Test
-  void returnValidOnCreateUser() {
+  void returnValidOnRegister() {
     // checkUserExists
     doReturn(Boolean.FALSE).when(keycloakUserService).checkAlreadyExist(account);
     // createUser
@@ -90,29 +92,56 @@ public class KeycloakRegistrationServiceTest {
     verifyNoMoreInteractions(keycloakUserService, keycloakTokenService);
   }
 
-  /*@Test
-  void returnValidOnCreateUserWithoutDoubleOptIn() {
-    KeycloakRegistrationService noDoubleOptInService = new KeycloakRegistrationService(keycloakAdapter,
-        REALM_NAME.getValue(), CLIENT_ID.getValue(), RegistrationMode.DEFAULT.name(), RegistrationRequirement.ROLE.name());
+  @Test
+  void returnValidOnRegisterWithoutDoubleOptIn() {
+    // setup service
+    KeycloakServiceConfiguration serviceConfiguration = new KeycloakServiceConfiguration(REALM_NAME.getValue(), CLIENT_ID.getValue());
+    KeycloakRegistrationServiceConfiguration registrationServiceConfiguration = new KeycloakRegistrationServiceConfiguration(
+        RegistrationMode.DEFAULT.name(), RegistrationRequirement.ROLE.name(), "5", "MINUTES");
+    KeycloakRegistrationService noDoubleOptInService = new KeycloakRegistrationService(serviceConfiguration,
+        registrationServiceConfiguration,
+        keycloakUserService,
+        keycloakTokenService);
+    // setup response data
+    UserAccount account = createUserAccount(Boolean.TRUE, Boolean.TRUE);
+    // checkUserExists
+    doReturn(Boolean.FALSE).when(keycloakUserService).checkAlreadyExist(account);
     // createUser
-    doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
-    doReturn(new MockResponse(201, USER_IDENTIFIER)).when(usersResource).create(any(UserRepresentation.class));
+    doReturn(account).when(keycloakUserService).createUser(account, EmailVerifiedMode.DEFAULT);
     // joinRoles
-    doReturn(rolesResource).when(keycloakAdapter).findRoleResource(REALM_NAME);
-    doReturn(roleRepresentations).when(rolesResource).list(eq(CLIENT_ID.getValue()), eq(0), eq(1));
-    doReturn(userResource).when(usersResource).get(eq(USER_IDENTIFIER.getValue()));
-    doReturn(roleMappingResource).when(userResource).roles();
-    doReturn(roleScopeResource).when(roleMappingResource).realmLevel();
-    doNothing().when(roleScopeResource).add(eq(roleRepresentations));
+    doNothing().when(keycloakUserService).joinRoles(USER_IDENTIFIER, RoleType.REALM, RoleName.fromValue(CLIENT_ID.getValue()));
+    // run test
     UserAccount response = noDoubleOptInService.register(account);
     assertThat(response.getIdentifier()).isEqualTo(USER_IDENTIFIER);
-  }*/
+    assertThat(response.getEmailVerified()).isTrue();
+    verifyNoMoreInteractions(keycloakUserService, keycloakTokenService);
+  }
+
+  @Test
+  void returnValidOnRegisterWithoutRoleRequired() {
+    // setup service
+    KeycloakServiceConfiguration serviceConfiguration = new KeycloakServiceConfiguration(REALM_NAME.getValue(), CLIENT_ID.getValue());
+    KeycloakRegistrationServiceConfiguration registrationServiceConfiguration = new KeycloakRegistrationServiceConfiguration(
+        RegistrationMode.DOUBLE_OPT_IN.name(), RegistrationRequirement.DEFAULT.name(), "5", "MINUTES");
+    KeycloakRegistrationService noRoleRequiredService = new KeycloakRegistrationService(serviceConfiguration,
+        registrationServiceConfiguration,
+        keycloakUserService,
+        keycloakTokenService);
+    // checkUserExists
+    doReturn(Boolean.FALSE).when(keycloakUserService).checkAlreadyExist(account);
+    // createUser
+    doReturn(account).when(keycloakUserService).createUser(account, EmailVerifiedMode.REQUIRED);
+    // run test
+    UserAccount response = noRoleRequiredService.register(account);
+    assertThat(response.getIdentifier()).isEqualTo(USER_IDENTIFIER);
+    verifyNoMoreInteractions(keycloakUserService, keycloakTokenService);
+  }
 
   @Test()
-  void returnAlreadyExistsOnCreateUser() {
+  void returnAlreadyExistsOnRegister() {
     // checkUserExists
     doReturn(Boolean.TRUE).when(keycloakUserService).checkAlreadyExist(account);
-
+    // run test
     assertThrows(RegistrationFailedException.class, () -> {
       service.register(account);
     });
@@ -120,13 +149,13 @@ public class KeycloakRegistrationServiceTest {
   }
 
   @Test
-  void returnInvalidOnCreateUser() {
+  void returnInvalidOnRegister() {
     // checkUserExists
     doReturn(Boolean.FALSE).when(keycloakUserService).checkAlreadyExist(account);
     // createUser
     UserCreationFailedException exception = new UserCreationFailedException(USERNAME.getValue(), 409, "User already exists");
     doThrow(exception).when(keycloakUserService).createUser(account, EmailVerifiedMode.REQUIRED);
-    // joinRoles
+    // run test
     assertThrows(RegistrationFailedException.class, () -> {
       service.register(account);
     });
@@ -134,16 +163,43 @@ public class KeycloakRegistrationServiceTest {
   }
 
   @Test
-  void verifyEmailAddress() {
+  void returnsValidOnVerifyEmailAddress() {
+    // decode token
     doReturn(token).when(keycloakTokenService).decode(VERIFICATION_LINK);
-
+    // update mail verification
     doNothing().when(keycloakUserService).updateMailVerification(USER_IDENTIFIER);
-
+    // run test
     UserIdentifier userIdentifier = service.verifyEmailAddress(VERIFICATION_LINK, ISSUER);
-
     assertThat(userIdentifier).isEqualTo(USER_IDENTIFIER);
     verifyNoMoreInteractions(keycloakUserService, keycloakTokenService);
   }
 
+  @Test
+  void returnsInvalidTokenOnVerifyEmailAddress() {
+    Token invalidToken = createToken(-1);
+    // decode token
+    doReturn(invalidToken).when(keycloakTokenService).decode(VERIFICATION_LINK);
+    // run test
+    assertThrows(InvalidTokenException.class, () -> {
+      service.verifyEmailAddress(VERIFICATION_LINK, ISSUER);
+    });
+    verifyNoMoreInteractions(keycloakUserService, keycloakTokenService);
+  }
+
+  @Test
+  void returnsValidOnCreateVerificationLink() {
+    doReturn(VERIFICATION_LINK).when(keycloakTokenService).encode(any(Token.class));
+    // run test
+    VerificationLink verificationLink = service.createVerificationLink(account, ISSUER);
+    assertThat(verificationLink).isEqualTo(VERIFICATION_LINK);
+    verifyNoMoreInteractions(keycloakUserService, keycloakTokenService);
+  }
+
+  @Test
+  void returnsValidOnGetKeycloakUserService() {
+    KeycloakUserService userService = service.getKeycloakUserService();
+    assertThat(userService).isEqualTo(keycloakUserService);
+    verifyNoMoreInteractions(keycloakUserService, keycloakTokenService);
+  }
 
 }

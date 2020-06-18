@@ -164,7 +164,7 @@ public class KeycloakUserServiceTest {
   }
 
   @Test
-  void updateMailVerification() {
+  void returnsValidOnUpdateMailVerification() {
     UserRepresentation keyCloakUser = new UserRepresentation();
     doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
     doReturn(userResource).when(usersResource).get(USER_IDENTIFIER.getValue());
@@ -177,7 +177,17 @@ public class KeycloakUserServiceTest {
   }
 
   @Test
-  void withGroupsJoinGroups() {
+  void returnsNotFoundOnUpdateMailVerification() {
+    UserIdentifier userIdentifier = UserIdentifier.fromValue("47110815");
+    doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
+    doThrow(new NotFoundException()).when(usersResource).get(userIdentifier.getValue());
+    assertThrows(UserNotFoundException.class, () -> {
+      service.updateMailVerification(userIdentifier);
+    });
+  }
+
+  @Test
+  void returnsValidOnJoinGroupsWithGroups() {
     GroupRepresentation groupRepresentation = new GroupRepresentation();
     groupRepresentation.setId("0815");
     GroupsResource groupsResource = mock(GroupsResource.class);
@@ -192,7 +202,7 @@ public class KeycloakUserServiceTest {
   }
 
   @Test
-  void withoutGroupsJoinGroups() {
+  void returnsValidOnJoinGroupsWithoutGroups() {
     GroupsResource groupsResource = mock(GroupsResource.class);
     UserResource userResource = mock(UserResource.class);
     doReturn(groupsResource).when(keycloakAdapter).findGroupResource(REALM_NAME);
@@ -204,7 +214,54 @@ public class KeycloakUserServiceTest {
   }
 
   @Test
-  void withRolesJoinRoles() {
+  void returnsNotFoundOnJoinGroups() {
+    UserIdentifier userIdentifier = UserIdentifier.fromValue("47110815");
+    doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
+    doThrow(new NotFoundException()).when(usersResource).get(userIdentifier.getValue());
+    assertThrows(UserNotFoundException.class, () -> {
+      service.joinGroups(userIdentifier, GroupName.fromValue("GROUP"));
+    });
+  }
+
+  @Test
+  void returnsValidOnLeaveGroupsWithGroups() {
+    GroupRepresentation groupRepresentation = new GroupRepresentation();
+    groupRepresentation.setId("0815");
+    GroupsResource groupsResource = mock(GroupsResource.class);
+    UserResource userResource = mock(UserResource.class);
+    doReturn(groupsResource).when(keycloakAdapter).findGroupResource(REALM_NAME);
+    doReturn(Collections.singletonList(groupRepresentation)).when(groupsResource).groups("GROUP", 0, 1);
+    doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
+    doReturn(userResource).when(usersResource).get(USER_IDENTIFIER.getValue());
+    doNothing().when(userResource).leaveGroup("0815");
+    service.leaveGroups(USER_IDENTIFIER, GroupName.fromValue("GROUP"));
+    verifyNoMoreInteractions(userResource, usersResource, groupsResource);
+  }
+
+  @Test
+  void returnsValidOnLeaveGroupsWithoutGroups() {
+    GroupsResource groupsResource = mock(GroupsResource.class);
+    UserResource userResource = mock(UserResource.class);
+    doReturn(groupsResource).when(keycloakAdapter).findGroupResource(REALM_NAME);
+    doReturn(Collections.emptyList()).when(groupsResource).groups("GROUP", 0, 1);
+    doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
+    doReturn(userResource).when(usersResource).get(USER_IDENTIFIER.getValue());
+    service.leaveGroups(USER_IDENTIFIER, GroupName.fromValue("GROUP"));
+    verifyNoMoreInteractions(userResource, usersResource, groupsResource);
+  }
+
+  @Test
+  void returnsNotFoundOnLeaveGroups() {
+    UserIdentifier userIdentifier = UserIdentifier.fromValue("47110815");
+    doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
+    doThrow(new NotFoundException()).when(usersResource).get(userIdentifier.getValue());
+    assertThrows(UserNotFoundException.class, () -> {
+      service.leaveGroups(userIdentifier, GroupName.fromValue("GROUP"));
+    });
+  }
+
+  @Test
+  void returnsValidOnJoinRolesWithRoleTypeRealmAndRoles() {
     RoleRepresentation roleRepresentation = new RoleRepresentation();
     roleRepresentation.setId("0815");
     RolesResource rolesResource = mock(RolesResource.class);
@@ -223,7 +280,7 @@ public class KeycloakUserServiceTest {
   }
 
   @Test
-  void withoutRolesJoinRoles() {
+  void returnsValidOnJoinRolesWithoutRoleTypeRealmAndRoles() {
     RolesResource rolesResource = mock(RolesResource.class);
     UserResource userResource = mock(UserResource.class);
     RoleMappingResource roleMappingResource = mock(RoleMappingResource.class);
@@ -237,6 +294,134 @@ public class KeycloakUserServiceTest {
     doNothing().when(roleScopeResource).add(Collections.emptyList());
     service.joinRoles(USER_IDENTIFIER, RoleType.REALM, RoleName.fromValue("ROLE"));
     verifyNoMoreInteractions(userResource, usersResource, rolesResource, roleMappingResource, roleScopeResource);
+  }
+
+  @Test
+  void returnsValidOnJoinRolesWithRoleTypeClientAndRoles() {
+    RoleRepresentation roleRepresentation = new RoleRepresentation();
+    roleRepresentation.setId("0815");
+    RolesResource rolesResource = mock(RolesResource.class);
+    UserResource userResource = mock(UserResource.class);
+    RoleMappingResource roleMappingResource = mock(RoleMappingResource.class);
+    RoleScopeResource roleScopeResource = mock(RoleScopeResource.class);
+    doReturn(rolesResource).when(keycloakAdapter).findClientRolesResource(REALM_NAME, CLIENT_ID);
+    doReturn(Collections.singletonList(roleRepresentation)).when(rolesResource).list("ROLE", 0, 1);
+    doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
+    doReturn(userResource).when(usersResource).get(USER_IDENTIFIER.getValue());
+    doReturn(roleMappingResource).when(userResource).roles();
+    doReturn(roleScopeResource).when(roleMappingResource).clientLevel(CLIENT_ID.getValue());
+    doNothing().when(roleScopeResource).add(Collections.singletonList(roleRepresentation));
+    service.joinRoles(USER_IDENTIFIER, RoleType.CLIENT, RoleName.fromValue("ROLE"));
+    verifyNoMoreInteractions(userResource, usersResource, rolesResource, roleMappingResource, roleScopeResource);
+  }
+
+  @Test
+  void returnsValidOnJoinRolesWithoutRoleTypeClientAndRoles() {
+    RolesResource rolesResource = mock(RolesResource.class);
+    UserResource userResource = mock(UserResource.class);
+    RoleMappingResource roleMappingResource = mock(RoleMappingResource.class);
+    RoleScopeResource roleScopeResource = mock(RoleScopeResource.class);
+    doReturn(rolesResource).when(keycloakAdapter).findClientRolesResource(REALM_NAME, CLIENT_ID);
+    doReturn(Collections.emptyList()).when(rolesResource).list("ROLE", 0, 1);
+    doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
+    doReturn(userResource).when(usersResource).get(USER_IDENTIFIER.getValue());
+    doReturn(roleMappingResource).when(userResource).roles();
+    doReturn(roleScopeResource).when(roleMappingResource).clientLevel(CLIENT_ID.getValue());
+    doNothing().when(roleScopeResource).add(Collections.emptyList());
+    service.joinRoles(USER_IDENTIFIER, RoleType.CLIENT, RoleName.fromValue("ROLE"));
+    verifyNoMoreInteractions(userResource, usersResource, rolesResource, roleMappingResource, roleScopeResource);
+  }
+
+  @Test
+  void returnsNotFoundOnJoinRoles() {
+    UserIdentifier userIdentifier = UserIdentifier.fromValue("47110815");
+    doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
+    doThrow(new NotFoundException()).when(usersResource).get(userIdentifier.getValue());
+    assertThrows(UserNotFoundException.class, () -> {
+      service.joinRoles(userIdentifier, RoleType.REALM, RoleName.fromValue("ROLE"));
+    });
+  }
+
+  @Test
+  void returnsValidOnLeaveRolesWithRoleTypeRealmAndRoles() {
+    RoleRepresentation roleRepresentation = new RoleRepresentation();
+    roleRepresentation.setId("0815");
+    RolesResource rolesResource = mock(RolesResource.class);
+    UserResource userResource = mock(UserResource.class);
+    RoleMappingResource roleMappingResource = mock(RoleMappingResource.class);
+    RoleScopeResource roleScopeResource = mock(RoleScopeResource.class);
+    doReturn(rolesResource).when(keycloakAdapter).findRealmRolesResource(REALM_NAME);
+    doReturn(Collections.singletonList(roleRepresentation)).when(rolesResource).list("ROLE", 0, 1);
+    doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
+    doReturn(userResource).when(usersResource).get(USER_IDENTIFIER.getValue());
+    doReturn(roleMappingResource).when(userResource).roles();
+    doReturn(roleScopeResource).when(roleMappingResource).realmLevel();
+    doNothing().when(roleScopeResource).remove(Collections.singletonList(roleRepresentation));
+    service.leaveRoles(USER_IDENTIFIER, RoleType.REALM, RoleName.fromValue("ROLE"));
+    verifyNoMoreInteractions(userResource, usersResource, rolesResource, roleMappingResource, roleScopeResource);
+  }
+
+  @Test
+  void returnsValidOnLeaveRolesWithoutRoleTypeRealmAndRoles() {
+    RolesResource rolesResource = mock(RolesResource.class);
+    UserResource userResource = mock(UserResource.class);
+    RoleMappingResource roleMappingResource = mock(RoleMappingResource.class);
+    RoleScopeResource roleScopeResource = mock(RoleScopeResource.class);
+    doReturn(rolesResource).when(keycloakAdapter).findRealmRolesResource(REALM_NAME);
+    doReturn(Collections.emptyList()).when(rolesResource).list("ROLE", 0, 1);
+    doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
+    doReturn(userResource).when(usersResource).get(USER_IDENTIFIER.getValue());
+    doReturn(roleMappingResource).when(userResource).roles();
+    doReturn(roleScopeResource).when(roleMappingResource).realmLevel();
+    doNothing().when(roleScopeResource).remove(Collections.emptyList());
+    service.leaveRoles(USER_IDENTIFIER, RoleType.REALM, RoleName.fromValue("ROLE"));
+    verifyNoMoreInteractions(userResource, usersResource, rolesResource, roleMappingResource, roleScopeResource);
+  }
+
+  @Test
+  void returnsValidOnLeaveRolesWithRoleTypeClientAndRoles() {
+    RoleRepresentation roleRepresentation = new RoleRepresentation();
+    roleRepresentation.setId("0815");
+    RolesResource rolesResource = mock(RolesResource.class);
+    UserResource userResource = mock(UserResource.class);
+    RoleMappingResource roleMappingResource = mock(RoleMappingResource.class);
+    RoleScopeResource roleScopeResource = mock(RoleScopeResource.class);
+    doReturn(rolesResource).when(keycloakAdapter).findClientRolesResource(REALM_NAME, CLIENT_ID);
+    doReturn(Collections.singletonList(roleRepresentation)).when(rolesResource).list("ROLE", 0, 1);
+    doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
+    doReturn(userResource).when(usersResource).get(USER_IDENTIFIER.getValue());
+    doReturn(roleMappingResource).when(userResource).roles();
+    doReturn(roleScopeResource).when(roleMappingResource).clientLevel(CLIENT_ID.getValue());
+    doNothing().when(roleScopeResource).remove(Collections.singletonList(roleRepresentation));
+    service.leaveRoles(USER_IDENTIFIER, RoleType.CLIENT, RoleName.fromValue("ROLE"));
+    verifyNoMoreInteractions(userResource, usersResource, rolesResource, roleMappingResource, roleScopeResource);
+  }
+
+  @Test
+  void returnsValidOnLeaveRolesWithoutRoleTypeClientAndRoles() {
+    RolesResource rolesResource = mock(RolesResource.class);
+    UserResource userResource = mock(UserResource.class);
+    RoleMappingResource roleMappingResource = mock(RoleMappingResource.class);
+    RoleScopeResource roleScopeResource = mock(RoleScopeResource.class);
+    doReturn(rolesResource).when(keycloakAdapter).findClientRolesResource(REALM_NAME, CLIENT_ID);
+    doReturn(Collections.emptyList()).when(rolesResource).list("ROLE", 0, 1);
+    doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
+    doReturn(userResource).when(usersResource).get(USER_IDENTIFIER.getValue());
+    doReturn(roleMappingResource).when(userResource).roles();
+    doReturn(roleScopeResource).when(roleMappingResource).clientLevel(CLIENT_ID.getValue());
+    doNothing().when(roleScopeResource).remove(Collections.emptyList());
+    service.leaveRoles(USER_IDENTIFIER, RoleType.CLIENT, RoleName.fromValue("ROLE"));
+    verifyNoMoreInteractions(userResource, usersResource, rolesResource, roleMappingResource, roleScopeResource);
+  }
+
+  @Test
+  void returnsNotFoundOnLeaveRoles() {
+    UserIdentifier userIdentifier = UserIdentifier.fromValue("47110815");
+    doReturn(usersResource).when(keycloakAdapter).findUserResource(REALM_NAME);
+    doThrow(new NotFoundException()).when(usersResource).get(userIdentifier.getValue());
+    assertThrows(UserNotFoundException.class, () -> {
+      service.leaveRoles(userIdentifier, RoleType.REALM, RoleName.fromValue("ROLE"));
+    });
   }
 
 }
