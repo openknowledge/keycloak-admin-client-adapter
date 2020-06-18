@@ -17,6 +17,7 @@ package de.openknowledge.authentication.domain.registration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -42,6 +43,7 @@ import de.openknowledge.authentication.domain.role.RoleName;
 import de.openknowledge.authentication.domain.role.RoleType;
 import de.openknowledge.authentication.domain.token.KeycloakTokenService;
 import de.openknowledge.authentication.domain.token.Token;
+import de.openknowledge.authentication.domain.token.VerificationLink;
 import de.openknowledge.authentication.domain.user.EmailVerifiedMode;
 import de.openknowledge.authentication.domain.user.KeycloakUserService;
 import de.openknowledge.authentication.domain.user.UserAccount;
@@ -78,7 +80,7 @@ public class KeycloakRegistrationServiceTest {
   }
 
   @Test
-  void returnValidOnCreateUser() {
+  void returnValidOnRegister() {
     // checkUserExists
     doReturn(Boolean.FALSE).when(keycloakUserService).checkAlreadyExist(account);
     // createUser
@@ -91,7 +93,7 @@ public class KeycloakRegistrationServiceTest {
   }
 
   @Test
-  void returnValidOnCreateUserWithoutDoubleOptIn() {
+  void returnValidOnRegisterWithoutDoubleOptIn() {
     // setup service
     KeycloakServiceConfiguration serviceConfiguration = new KeycloakServiceConfiguration(REALM_NAME.getValue(), CLIENT_ID.getValue());
     KeycloakRegistrationServiceConfiguration registrationServiceConfiguration = new KeycloakRegistrationServiceConfiguration(
@@ -116,7 +118,7 @@ public class KeycloakRegistrationServiceTest {
   }
 
   @Test
-  void returnValidOnCreateUserWithoutRoleRequired() {
+  void returnValidOnRegisterWithoutRoleRequired() {
     // setup service
     KeycloakServiceConfiguration serviceConfiguration = new KeycloakServiceConfiguration(REALM_NAME.getValue(), CLIENT_ID.getValue());
     KeycloakRegistrationServiceConfiguration registrationServiceConfiguration = new KeycloakRegistrationServiceConfiguration(
@@ -136,7 +138,7 @@ public class KeycloakRegistrationServiceTest {
   }
 
   @Test()
-  void returnAlreadyExistsOnCreateUser() {
+  void returnAlreadyExistsOnRegister() {
     // checkUserExists
     doReturn(Boolean.TRUE).when(keycloakUserService).checkAlreadyExist(account);
     // run test
@@ -147,7 +149,7 @@ public class KeycloakRegistrationServiceTest {
   }
 
   @Test
-  void returnInvalidOnCreateUser() {
+  void returnInvalidOnRegister() {
     // checkUserExists
     doReturn(Boolean.FALSE).when(keycloakUserService).checkAlreadyExist(account);
     // createUser
@@ -161,7 +163,7 @@ public class KeycloakRegistrationServiceTest {
   }
 
   @Test
-  void verifyEmailAddress() {
+  void returnsValidOnVerifyEmailAddress() {
     // decode token
     doReturn(token).when(keycloakTokenService).decode(VERIFICATION_LINK);
     // update mail verification
@@ -172,5 +174,32 @@ public class KeycloakRegistrationServiceTest {
     verifyNoMoreInteractions(keycloakUserService, keycloakTokenService);
   }
 
+  @Test
+  void returnsInvalidTokenOnVerifyEmailAddress() {
+    Token invalidToken = createToken(-1);
+    // decode token
+    doReturn(invalidToken).when(keycloakTokenService).decode(VERIFICATION_LINK);
+    // run test
+    assertThrows(InvalidTokenException.class, () -> {
+      service.verifyEmailAddress(VERIFICATION_LINK, ISSUER);
+    });
+    verifyNoMoreInteractions(keycloakUserService, keycloakTokenService);
+  }
+
+  @Test
+  void returnsValidOnCreateVerificationLink() {
+    doReturn(VERIFICATION_LINK).when(keycloakTokenService).encode(any(Token.class));
+    // run test
+    VerificationLink verificationLink = service.createVerificationLink(account, ISSUER);
+    assertThat(verificationLink).isEqualTo(VERIFICATION_LINK);
+    verifyNoMoreInteractions(keycloakUserService, keycloakTokenService);
+  }
+
+  @Test
+  void returnsValidOnGetKeycloakUserService() {
+    KeycloakUserService userService = service.getKeycloakUserService();
+    assertThat(userService).isEqualTo(keycloakUserService);
+    verifyNoMoreInteractions(keycloakUserService, keycloakTokenService);
+  }
 
 }

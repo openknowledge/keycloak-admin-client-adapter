@@ -66,7 +66,11 @@ public class ObjectMother {
   }
 
   public static Token createToken() {
-    return new Token(USERNAME, USER_IDENTIFIER, MAIL_ADDRESS, ISSUER, 5, TimeUnit.MINUTES);
+    return createToken(5);
+  }
+
+  public static Token createToken(Integer timeToLife) {
+    return new Token(USERNAME, USER_IDENTIFIER, MAIL_ADDRESS, ISSUER, timeToLife, TimeUnit.MINUTES);
   }
 
   public static List<RoleRepresentation> createRoleRepresentations() {

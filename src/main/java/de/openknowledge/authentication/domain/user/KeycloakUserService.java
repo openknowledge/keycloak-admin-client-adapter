@@ -123,9 +123,9 @@ public class KeycloakUserService {
   }
 
   public void joinGroups(UserIdentifier userIdentifier, GroupName... groupNames) throws UserNotFoundException {
-    List<GroupId> joiningGroups = findGroupIds(groupNames);
     try {
       UserResource userResource = keycloakAdapter.findUserResource(getRealmName()).get(userIdentifier.getValue());
+      List<GroupId> joiningGroups = findGroupIds(groupNames);
       for (GroupId groupId : joiningGroups) {
         userResource.joinGroup(groupId.getValue());
       }
@@ -135,9 +135,9 @@ public class KeycloakUserService {
   }
 
   public void leaveGroups(UserIdentifier userIdentifier, GroupName... groupNames) throws UserNotFoundException {
-    List<GroupId> leavingGroups = findGroupIds(groupNames);
     try {
       UserResource userResource = keycloakAdapter.findUserResource(getRealmName()).get(userIdentifier.getValue());
+      List<GroupId> leavingGroups = findGroupIds(groupNames);
       for (GroupId groupId : leavingGroups) {
         userResource.leaveGroup(groupId.getValue());
       }
@@ -147,9 +147,9 @@ public class KeycloakUserService {
   }
 
   public void joinRoles(UserIdentifier userIdentifier, RoleType roleType, RoleName... roleNames) throws UserNotFoundException {
-    List<RoleRepresentation> joiningRoles = findRoles(getRolesResource(roleType), roleNames);
     try {
       UserResource userResource = keycloakAdapter.findUserResource(getRealmName()).get(userIdentifier.getValue());
+      List<RoleRepresentation> joiningRoles = findRoles(getRolesResource(roleType), roleNames);
       switch (roleType) {
         case REALM:
           userResource.roles().realmLevel().add(joiningRoles);
@@ -166,9 +166,9 @@ public class KeycloakUserService {
   }
 
   public void leaveRoles(UserIdentifier userIdentifier, RoleType roleType, RoleName... roleNames) throws UserNotFoundException {
-    List<RoleRepresentation> leavingRoles = findRoles(getRolesResource(roleType), roleNames);
     try {
       UserResource userResource = keycloakAdapter.findUserResource(getRealmName()).get(userIdentifier.getValue());
+      List<RoleRepresentation> leavingRoles = findRoles(getRolesResource(roleType), roleNames);
       switch (roleType) {
         case REALM:
           userResource.roles().realmLevel().remove(leavingRoles);
