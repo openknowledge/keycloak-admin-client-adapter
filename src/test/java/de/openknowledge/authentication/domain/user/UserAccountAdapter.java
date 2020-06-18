@@ -7,7 +7,9 @@ public class UserAccountAdapter extends UserAccount {
 
   public UserAccountAdapter(Username theUsername, EmailAddress theEmailAddress, Password thePassword, UserIdentifier identifier) {
     super(theUsername, theEmailAddress, thePassword);
-    setIdentifier(identifier);
+    if (identifier != null) {
+      setIdentifier(identifier);
+    }
   }
 
 }

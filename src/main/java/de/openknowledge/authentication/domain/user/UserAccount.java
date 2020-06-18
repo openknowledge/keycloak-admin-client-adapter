@@ -3,7 +3,10 @@ package de.openknowledge.authentication.domain.user;
 import static org.apache.commons.lang3.Validate.notNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -32,6 +35,7 @@ public class UserAccount {
 
   /**
    * UserAccount for user in keycloak with email address and password
+   *
    * @param theEmailAddress - the keycloak email address and the username
    */
   public UserAccount(EmailAddress theEmailAddress) {
@@ -40,8 +44,9 @@ public class UserAccount {
 
   /**
    * UserAccount for user in keycloak with email address and password
+   *
    * @param theEmailAddress - the keycloak email address and the username
-   * @param thePassword - the keycloak password
+   * @param thePassword     - the keycloak password
    */
   public UserAccount(EmailAddress theEmailAddress, Password thePassword) {
     this(Username.fromValue(theEmailAddress.getValue()), theEmailAddress, thePassword);
@@ -49,9 +54,10 @@ public class UserAccount {
 
   /**
    * UserAccount for user in keycloak with username, email address and password
-   * @param theUsername - the keycloak username
+   *
+   * @param theUsername     - the keycloak username
    * @param theEmailAddress - the keycloak email address
-   * @param thePassword - the keycloak password
+   * @param thePassword     - the keycloak password
    */
   public UserAccount(Username theUsername, EmailAddress theEmailAddress, Password thePassword) {
     username = theUsername;
@@ -68,6 +74,39 @@ public class UserAccount {
     if (user.isEmailVerified() != null && user.isEmailVerified()) {
       emailVerified();
     }
+    if (user.getAttributes() != null) {
+      convertMapToAttributes(user.getAttributes());
+    }
+  }
+
+  Boolean isDifferent(UserAccount account) {
+    return !getEmailAddress().equals(account.getEmailAddress())
+        || !getUsername().equals(account.getUsername())
+        || (getName() != null && !getName().equals(account.getName()))
+        || (getName() == null && account.getName() != null)
+        || !getEmailVerified().equals(account.getEmailVerified());
+  }
+
+  UserRepresentation asRepresentation(Boolean newObject) {
+    UserRepresentation keycloakUser = new UserRepresentation();
+    keycloakUser.setUsername(getUsername().getValue());
+    keycloakUser.setEmail(getEmailAddress().getValue());
+    keycloakUser.setEnabled(true);
+    if (getIdentifier() != null) {
+      keycloakUser.setId(getIdentifier().getValue());
+    }
+    if (getName() != null && getName().getFirstName() != null) {
+      keycloakUser.setFirstName(getName().getFirstName().getValue());
+    }
+    if (getName() != null && getName().getLastName() != null) {
+      keycloakUser.setLastName(getName().getLastName().getValue());
+    }
+    keycloakUser.setEmailVerified(getEmailVerified());
+    keycloakUser.setAttributes(convertAttributesToMap());
+    if (newObject && getPassword() != null) {
+      keycloakUser.setCredentials(Collections.singletonList(getPassword().asCredential()));
+    }
+    return keycloakUser;
   }
 
   public Token asToken(Issuer issuer) {
@@ -174,6 +213,29 @@ public class UserAccount {
       setName(Name.fromValue(firstName));
     } else if (lastName != null) {
       setName(Name.fromValue(lastName));
+    }
+  }
+
+  private Map<String, List<String>> convertAttributesToMap() {
+    Map<String, List<String>> userAttributeMap = new HashMap<>();
+    for (Attribute attribute : getAttributes()) {
+      List<String> userAttributeList;
+      if (userAttributeMap.containsKey(attribute.getKey())) {
+        userAttributeList = userAttributeMap.get(attribute.getKey());
+      } else {
+        userAttributeList = new ArrayList<>();
+      }
+      userAttributeList.add(attribute.getValue());
+      userAttributeMap.put(attribute.getKey(), userAttributeList);
+    }
+    return userAttributeMap;
+  }
+
+  private void convertMapToAttributes(Map<String, List<String>> attributeMap) {
+    for (Map.Entry<String, List<String>> entry : attributeMap.entrySet()) {
+      for (String value : entry.getValue()) {
+        addAttribute(new Attribute(entry.getKey(), value));
+      }
     }
   }
 }

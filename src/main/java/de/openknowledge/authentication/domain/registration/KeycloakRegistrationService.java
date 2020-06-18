@@ -96,7 +96,7 @@ public class KeycloakRegistrationService {
     if (isRoleRequired()) {
       // client id as role to access client (because: required role extension)
       ClientId clientId = ClientId.fromValue(serviceConfiguration.getClientId());
-      keycloakUserService.joinRoles(newUserAccount.getIdentifier(), RoleType.REALM, RoleName.fromValue(clientId.getValue()));
+      keycloakUserService.joinRoles(newUserAccount.getIdentifier(), RoleType.REALM, RoleName.fromValue(clientId.getValue().toUpperCase()));
     }
 
     return userAccount;
@@ -114,7 +114,12 @@ public class KeycloakRegistrationService {
     // convert to customerNumber and load account
     UserIdentifier userIdentifier = token.asUserIdentifier();
 
-    keycloakUserService.updateMailVerification(userIdentifier);
+    // load user and set email verified
+    UserAccount userAccount = keycloakUserService.getUser(userIdentifier);
+    userAccount.emailVerified();
+
+    // update user
+    keycloakUserService.updateUser(userAccount);
 
     return userIdentifier;
   }

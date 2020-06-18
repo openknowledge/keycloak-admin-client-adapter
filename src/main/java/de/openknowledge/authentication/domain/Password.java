@@ -17,6 +17,8 @@ package de.openknowledge.authentication.domain;
 
 import static org.apache.commons.lang3.Validate.notBlank;
 
+import org.keycloak.representations.idm.CredentialRepresentation;
+
 import de.openknowledge.common.domain.AbstractStringValueObject;
 
 public class Password extends AbstractStringValueObject {
@@ -33,6 +35,14 @@ public class Password extends AbstractStringValueObject {
   public static Password fromValue(String password) {
     notBlank(password, "password may not be blank");
     return new Password(password);
+  }
+
+  public CredentialRepresentation asCredential() {
+    CredentialRepresentation credential = new CredentialRepresentation();
+    credential.setValue(getValue());
+    credential.setType(CredentialRepresentation.PASSWORD);
+    credential.setTemporary(false);
+    return credential;
   }
 
   @Override

@@ -19,6 +19,7 @@ import java.util.List;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
 
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
@@ -32,6 +33,7 @@ import org.keycloak.admin.client.resource.RealmsResource;
 import org.keycloak.admin.client.resource.RolesResource;
 import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.admin.client.token.TokenService;
+import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 
 @ApplicationScoped
@@ -69,17 +71,22 @@ public class KeycloakAdapter {
     return keycloak.realm(realmName.getValue());
   }
 
-  public ClientResource findClientResource(RealmName realmName, ClientId clientId) {
-    ClientsResource clientsResource = findRealmResource(realmName).clients();
-    return clientsResource.get(clientId.getValue());
+  public ClientsResource findClientsResource(RealmName realmName) {
+    return findRealmResource(realmName).clients();
   }
 
-  public UsersResource findUserResource(RealmName realmName) {
+  public ClientResource findClientResource(RealmName realmName, ClientId clientId) {
+    ClientsResource clientsResource = findClientsResource(realmName);
+    String clientUuid = findClientUuid(clientsResource, clientId);
+    return clientsResource.get(clientUuid);
+  }
+
+  public UsersResource findUsersResource(RealmName realmName) {
     RealmResource realmResource = findRealmResource(realmName);
     return realmResource.users();
   }
 
-  public GroupsResource findGroupResource(RealmName realmName) {
+  public GroupsResource findGroupsResource(RealmName realmName) {
     RealmResource realmResource = findRealmResource(realmName);
     return realmResource.groups();
   }
@@ -90,7 +97,21 @@ public class KeycloakAdapter {
   }
 
   public RolesResource findClientRolesResource(RealmName realmName, ClientId clientId) {
-    return findClientResource(realmName, clientId).roles();
+    ClientResource clientResource = findClientResource(realmName, clientId);
+    return clientResource.roles();
+  }
+
+  public String findClientUuid(RealmName realmName, ClientId clientId) {
+    ClientsResource clientsResource = findClientsResource(realmName);
+    return findClientUuid(clientsResource, clientId);
+  }
+
+  public String findClientUuid(ClientsResource clientsResource, ClientId clientId) {
+    List<ClientRepresentation> clientRepresentations = clientsResource.findByClientId(clientId.getValue());
+    if (clientRepresentations.isEmpty()) {
+      throw new NotFoundException("client not found for clientId '" + clientId + "'");
+    }
+    return clientRepresentations.stream().findFirst().get().getId();
   }
 
   public TokenService getTokenService() {
