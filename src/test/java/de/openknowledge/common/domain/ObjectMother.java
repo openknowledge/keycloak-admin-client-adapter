@@ -50,8 +50,16 @@ public class ObjectMother {
   }
 
   public static UserAccount createUserAccount(Boolean withIdentifier) {
+    return createUserAccount(withIdentifier, Boolean.FALSE);
+  }
+
+  public static UserAccount createUserAccount(Boolean withIdentifier, Boolean withEmailVerified) {
     if (withIdentifier) {
-      return new UserAccountAdapter(USERNAME, MAIL_ADDRESS, PASSWORD, USER_IDENTIFIER);
+      UserAccountAdapter account = new UserAccountAdapter(USERNAME, MAIL_ADDRESS, PASSWORD, USER_IDENTIFIER);
+      if (withEmailVerified) {
+        account.emailVerified();
+      }
+      return account;
     } else {
       return new UserAccount(USERNAME, MAIL_ADDRESS, PASSWORD);
     }
