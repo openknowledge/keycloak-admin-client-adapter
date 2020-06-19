@@ -24,6 +24,7 @@ import org.keycloak.representations.idm.RoleRepresentation;
 import de.openknowledge.authentication.domain.ClientId;
 import de.openknowledge.authentication.domain.Password;
 import de.openknowledge.authentication.domain.RealmName;
+import de.openknowledge.authentication.domain.UserIdentifier;
 import de.openknowledge.authentication.domain.Username;
 import de.openknowledge.authentication.domain.login.Login;
 import de.openknowledge.authentication.domain.registration.Issuer;
@@ -31,8 +32,6 @@ import de.openknowledge.authentication.domain.token.Token;
 import de.openknowledge.authentication.domain.token.VerificationLink;
 import de.openknowledge.authentication.domain.user.EmailAddress;
 import de.openknowledge.authentication.domain.user.UserAccount;
-import de.openknowledge.authentication.domain.user.UserAccountAdapter;
-import de.openknowledge.authentication.domain.UserIdentifier;
 
 public class ObjectMother {
 
@@ -56,9 +55,9 @@ public class ObjectMother {
   public static UserAccount createUserAccount(Boolean withIdentifier, Boolean withEmailVerified) {
     UserAccount account;
     if (withIdentifier) {
-      account = new UserAccountAdapter(USERNAME, MAIL_ADDRESS, PASSWORD, USER_IDENTIFIER);
+      account = new UserAccount(USER_IDENTIFIER, USERNAME, MAIL_ADDRESS, PASSWORD);
     } else {
-      account = new UserAccountAdapter(USERNAME, MAIL_ADDRESS, PASSWORD, null);
+      account = new UserAccount(USERNAME, MAIL_ADDRESS, PASSWORD);
     }
     if (withEmailVerified) {
       account.emailVerified();

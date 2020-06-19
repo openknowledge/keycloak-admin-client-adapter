@@ -100,7 +100,7 @@ public class KeycloakUserService {
     String path = response.getLocation().getPath();
     String userId = path.replaceAll(".*/([^/]+)$", "$1");
     UserIdentifier identifier = UserIdentifier.fromValue(userId);
-    account.setIdentifier(identifier);
+    account.bindTo(identifier);
     return account;
   }
 
@@ -116,6 +116,7 @@ public class KeycloakUserService {
 
   public void updateUser(UserAccount account) throws UserNotFoundException {
     notNull(account, "account may be not null");
+    notNull(account.getIdentifier(), "account identifier may be not null");
     UserIdentifier identifier = account.getIdentifier();
     try {
       UserResource resource = keycloakAdapter.findUsersResource(getRealmName()).get(identifier.getValue());
@@ -144,18 +145,6 @@ public class KeycloakUserService {
     Response response = keycloakAdapter.findUsersResource(getRealmName()).delete(identifier.getValue());
     if (response.getStatus() != 204 && response.getStatus() != 404) {
       throw new UserDeletionFailedException(identifier.getValue(), response.getStatus());
-    }
-  }
-
-  public void updateMailVerification(UserIdentifier identifier) throws UserNotFoundException {
-    notNull(identifier, "identifier may be not null");
-    try {
-      UserResource userResource = keycloakAdapter.findUsersResource(getRealmName()).get(identifier.getValue());
-      UserRepresentation user = userResource.toRepresentation();
-      user.setEmailVerified(true);
-      userResource.update(user);
-    } catch (NotFoundException e) {
-      throw new UserNotFoundException(identifier, e);
     }
   }
 
@@ -242,6 +231,7 @@ public class KeycloakUserService {
   }
 
   private List<RoleRepresentation> findRoles(RolesResource resource, RoleName... roleNames) {
+    notNull(resource, "roles resource identifier may be not null");
     List<RoleRepresentation> searchedRoles = new ArrayList<>();
     for (RoleName roleName : roleNames) {
       RoleRepresentation role = resource.get(roleName.getValue()).toRepresentation();
