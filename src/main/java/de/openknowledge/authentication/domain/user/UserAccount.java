@@ -40,7 +40,11 @@ public class UserAccount {
    * @param theEmailAddress - the keycloak email address and the username
    */
   public UserAccount(EmailAddress theEmailAddress) {
-    this(Username.fromValue(theEmailAddress.getValue()), theEmailAddress, null);
+    this(null, Username.fromValue(theEmailAddress.getValue()), theEmailAddress, null);
+  }
+
+  public UserAccount(UserIdentifier theIdentifier, EmailAddress theEmailAddress) {
+    this(theIdentifier, Username.fromValue(theEmailAddress.getValue()), theEmailAddress, null);
   }
 
   /**
@@ -50,7 +54,11 @@ public class UserAccount {
    * @param thePassword     - the keycloak password
    */
   public UserAccount(EmailAddress theEmailAddress, Password thePassword) {
-    this(Username.fromValue(theEmailAddress.getValue()), theEmailAddress, thePassword);
+    this(null, Username.fromValue(theEmailAddress.getValue()), theEmailAddress, thePassword);
+  }
+
+  public UserAccount(UserIdentifier theIdentifier, EmailAddress theEmailAddress, Password thePassword) {
+    this(theIdentifier, Username.fromValue(theEmailAddress.getValue()), theEmailAddress, thePassword);
   }
 
   /**
@@ -61,6 +69,11 @@ public class UserAccount {
    * @param thePassword     - the keycloak password
    */
   public UserAccount(Username theUsername, EmailAddress theEmailAddress, Password thePassword) {
+    this(null, theUsername, theEmailAddress, thePassword);
+  }
+
+  public UserAccount(UserIdentifier theIdentifier, Username theUsername, EmailAddress theEmailAddress, Password thePassword) {
+    identifier = theIdentifier;
     username = theUsername;
     emailAddress = theEmailAddress;
     password = thePassword;
@@ -69,8 +82,10 @@ public class UserAccount {
   }
 
   UserAccount(UserRepresentation user) {
-    this(Username.fromValue(user.getUsername()), EmailAddress.fromValue(user.getEmail()), null);
-    setIdentifier(UserIdentifier.fromValue(user.getId()));
+    this(UserIdentifier.fromValue(user.getId()),
+        Username.fromValue(user.getUsername()),
+        EmailAddress.fromValue(user.getEmail()),
+        null);
     createName(user);
     if (user.isEmailVerified() != null && user.isEmailVerified()) {
       emailVerified();
@@ -150,7 +165,7 @@ public class UserAccount {
     return attributes;
   }
 
-  void setIdentifier(UserIdentifier anIdentifier) {
+  void bindTo(UserIdentifier anIdentifier) {
     notNull(anIdentifier, "identifier may not be null");
     identifier = anIdentifier;
   }

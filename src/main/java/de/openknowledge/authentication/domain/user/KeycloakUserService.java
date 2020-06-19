@@ -100,7 +100,7 @@ public class KeycloakUserService {
     String path = response.getLocation().getPath();
     String userId = path.replaceAll(".*/([^/]+)$", "$1");
     UserIdentifier identifier = UserIdentifier.fromValue(userId);
-    account.setIdentifier(identifier);
+    account.bindTo(identifier);
     return account;
   }
 
