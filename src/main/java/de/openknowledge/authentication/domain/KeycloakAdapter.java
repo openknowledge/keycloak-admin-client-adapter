@@ -20,9 +20,11 @@ import java.util.List;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.client.ClientBuilder;
 
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.keycloak.admin.client.ClientBuilderWrapper;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.ClientResource;
@@ -49,7 +51,11 @@ public class KeycloakAdapter {
 
   @Inject
   public KeycloakAdapter(KeycloakAdapterConfiguration adapterConfig) {
-    ResteasyClient restClient = new ResteasyClientBuilder().connectionPoolSize(adapterConfig.getConnectionPoolSize()).build();
+
+    ResteasyClient c = (ResteasyClient) ResteasyClientBuilder.newClient();
+    ClientBuilder clientBuilder = ClientBuilderWrapper.create(c.getSslContext(), false);
+    ResteasyClient restClient = (ResteasyClient) clientBuilder.build();
+
     keycloak = KeycloakBuilder.builder()
         .serverUrl(adapterConfig.getServerUrl())
         .realm(adapterConfig.getMasterRealm())
@@ -57,7 +63,7 @@ public class KeycloakAdapter {
         .username(adapterConfig.getUsername())
         .password(adapterConfig.getPassword())
         .clientId(adapterConfig.getClientId())
-        .resteasyClient(restClient)
+        .resteasyClient(null)
         .build();
     tokenService = restClient.target(adapterConfig.getServerUrl()).proxy(TokenService.class);
   }
