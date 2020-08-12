@@ -5,13 +5,13 @@
                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.openknowledge.authentication</groupId>
-  <artifactId>keycloak-admin-client-adapter</artifactId>
-  <version>1.5.2</version>
+  <artifactId>quarkus-keycloak-admin-client-adapter</artifactId>
+  <version>1.0.0</version>
   <packaging>jar</packaging>
 
-  <name>Keycloak Admin Client Adapter</name>
-  <description>A keycloak admin client adapter to provide convenience methods to create or login users on keycloak</description>
-  <url>https://github.com/openknowledge</url>
+  <name>Quarkus Keycloak Admin Client Adapter</name>
+  <description>A Quarkus keycloak admin client adapter to provide convenience methods to create or login users on keycloak</description>
+  <url>https://github.com/ims-go/keycloak-admin-client-adapter/</url>
 
   <developers>
     <developer>
@@ -36,47 +36,36 @@
   </licenses>
 
   <scm>
-    <url>https://github.com/openknowledge/keycloak-admin-client-adapter</url>
-    <connection>scm:git:git://github.com/openknowledge/keycloak-admin-client-adapter.git</connection>
-    <developerConnection>scm:git:ssh://github.com:openknowledge/keycloak-admin-client-adapter.git</developerConnection>
+    <url>https://github.com/ims-go/keycloak-admin-client-adapter</url>
+    <connection>scm:git:git://github.com/ims-go/keycloak-admin-client-adapter.git</connection>
+    <developerConnection>scm:git:ssh://github.com:ims-go/keycloak-admin-client-adapter.git</developerConnection>
   </scm>
 
   <distributionManagement>
-    <snapshotRepository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
     <repository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+      <id>maven-releases</id>
+      <name>artifactory-releases</name>
+      <url>https://jfrog.ims-go.de/artifactory/maven-releases</url>
     </repository>
+    <snapshotRepository>
+      <id>maven-snapshots</id>
+      <name>artifactory-snapshots</name>
+      <url>https://jfrog.ims-go.de/artifactory/maven-snapshots</url>
+    </snapshotRepository>
   </distributionManagement>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-    <!--  Jakarta EE specs  -->
-    <cdi-api.version>2.0.2</cdi-api.version>
-    <jsonb-api.version>1.0.2</jsonb-api.version>
-
-    <!-- MicroProfile specs  -->
-    <mp-config.version>1.4</mp-config.version>
-
-    <!-- keycloak -->
-    <keycloak-admin-client.version>10.0.2</keycloak-admin-client.version>
-    <bcprov-jdk15on.version>1.65.01</bcprov-jdk15on.version>
+    <!-- Quarkus -->
+    <quarkus.version>1.6.1.Final</quarkus.version>
 
     <!-- common -->
     <commons-lang.version>3.10</commons-lang.version>
 
-    <!-- logging -->
-    <slf4j.version>1.7.30</slf4j.version>
-
     <!-- testing -->
     <jsonb-api-yasson.version>1.0.7</jsonb-api-yasson.version>
-    <junit-jupiter.version>5.6.2</junit-jupiter.version>
-    <junit-platform.version>1.6.2</junit-platform.version>
     <assertj.version>3.16.1</assertj.version>
     <mockito.version>3.3.3</mockito.version>
 
@@ -95,48 +84,16 @@
 
   <dependencies>
     <!-- keycloak admin client dependencies -->
+
     <dependency>
-      <groupId>org.keycloak</groupId>
-      <artifactId>keycloak-admin-client</artifactId>
-      <version>${keycloak-admin-client.version}</version>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-keycloak-admin-client</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcprov-jdk15on</artifactId>
-      <version>${bcprov-jdk15on.version}</version>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-resteasy-jsonb</artifactId>
     </dependency>
-    <!-- java enterprise and microprofile dependencies -->
-    <dependency>
-      <groupId>jakarta.enterprise</groupId>
-      <artifactId>jakarta.enterprise.cdi-api</artifactId>
-      <version>${cdi-api.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>jakarta.json.bind</groupId>
-      <artifactId>jakarta.json.bind-api</artifactId>
-      <version>${jsonb-api.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.microprofile.config</groupId>
-      <artifactId>microprofile-config-api</artifactId>
-      <version>${mp-config.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <!-- logging dependencies -->
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>${slf4j.version}</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-simple</artifactId>
-      <version>${slf4j.version}</version>
-      <scope>test</scope>
-    </dependency>
+
     <!-- common dependencies -->
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -144,37 +101,14 @@
       <version>${commons-lang.version}</version>
       <scope>compile</scope>
     </dependency>
+
     <!-- test dependencies -->
     <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-api</artifactId>
-      <version>${junit-jupiter.version}</version>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit5</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-params</artifactId>
-      <version>${junit-jupiter.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-engine</artifactId>
-      <version>${junit-jupiter.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.vintage</groupId>
-      <artifactId>junit-vintage-engine</artifactId>
-      <version>${junit-jupiter.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.platform</groupId>
-      <artifactId>junit-platform-commons</artifactId>
-      <version>${junit-platform.version}</version>
-      <scope>test</scope>
-    </dependency>
+
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
@@ -200,6 +134,18 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-bom</artifactId>
+        <version>${quarkus.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <build>
     <plugins>
@@ -263,39 +209,6 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <version>${maven-javadoc-plugin.version}</version>
-        <executions>
-          <execution>
-            <id>attach-javadocs</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-gpg-plugin</artifactId>
-        <version>${maven-gpg-plugin.version}</version>
-        <executions>
-          <execution>
-            <id>sign-artifacts</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>sign</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <gpgArguments>
-            <arg>--pinentry-mode</arg>
-            <arg>loopback</arg>
-          </gpgArguments>
-        </configuration>
-      </plugin>
-      <plugin>
         <groupId>org.sonatype.plugins</groupId>
         <artifactId>nexus-staging-maven-plugin</artifactId>
         <version>${nexus-staging-maven-plugin.version}</version>
@@ -308,7 +221,19 @@
           <stagingProgressTimeoutMinutes>15</stagingProgressTimeoutMinutes>
         </configuration>
       </plugin>
+
+      <plugin>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-maven-plugin</artifactId>
+        <version>${quarkus.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>build</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
-
 </project>
