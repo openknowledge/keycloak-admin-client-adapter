@@ -67,7 +67,7 @@
     <!-- testing -->
     <jsonb-api-yasson.version>1.0.8</jsonb-api-yasson.version>
     <assertj.version>3.16.1</assertj.version>
-    <mockito.version>3.3.3</mockito.version>
+    <mockito.version>3.4.6</mockito.version>
 
     <!-- maven plugins -->
     <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
