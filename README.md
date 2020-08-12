@@ -3,11 +3,11 @@
 ![Build](https://github.com/openknowledge/keycloak-admin-client-adapter/workflows/Build/badge.svg) [![Maven Central](https://img.shields.io/maven-central/v/de.openknowledge.authentication/keycloak-admin-client-adapter.svg?label=Maven%20Central&color=brightgreen)](https://search.maven.org/search?q=g:%22de.openknowledge.authentication%22%20AND%20a:%22keycloak-admin-client-adapter%22) [![License](https://img.shields.io/badge/License-Apache%202.0-brightgreen.svg)](https://opensource.org/licenses/Apache-2.0) [![Maintenance](https://img.shields.io/badge/Maintained-yes-brightgreen.svg)](https://github.com/openknowledge/keycloak-admin-client-adapter/graphs/commit-activity)
 
 This adapter provides convenience methods to register and login users to keycloak. It's based on the official 
-keycloak admin client to work with a keycloak server from a microprofile based microservice.
+keycloak admin client to work with a keycloak server from a quarkus microprofile based microservice.
 
 ### MP-Config-Parameter:
 
-The following required configuration must be provided by the 'microprofile-config.properties'
+The following required configuration must be provided by the 'application.properties'
 
 #### Keycloak adapter configuration {KeycloakAdapterConfiguration.java}
 

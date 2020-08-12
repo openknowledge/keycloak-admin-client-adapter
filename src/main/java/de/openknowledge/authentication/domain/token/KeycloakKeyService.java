@@ -168,7 +168,7 @@ public class KeycloakKeyService {
   private static void writeToFile(String content, String resourceName) {
     BufferedWriter writer = null;
     try {
-      URL url = KeycloakKeyService.class.getClassLoader().getResource(resourceName);
+      URL url = Thread.currentThread().getContextClassLoader().getResource(resourceName);
       if (url == null) {
         throw new IllegalArgumentException("'" + resourceName + "' is not a resource");
       }
@@ -195,7 +195,7 @@ public class KeycloakKeyService {
 
   private static String readFromFile(String resourceName) {
     try {
-      InputStream is = KeycloakKeyService.class.getClassLoader().getResourceAsStream(resourceName);
+      InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourceName);
       if (is == null) {
         throw new IllegalArgumentException("'" + resourceName + "' is not a resource to stream");
       }
