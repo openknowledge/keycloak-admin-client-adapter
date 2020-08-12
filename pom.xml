@@ -62,7 +62,7 @@
     <quarkus.version>1.7.0.Final</quarkus.version>
 
     <!-- common -->
-    <commons-lang.version>3.10</commons-lang.version>
+    <commons-lang.version>3.11</commons-lang.version>
 
     <!-- testing -->
     <jsonb-api-yasson.version>1.0.8</jsonb-api-yasson.version>
