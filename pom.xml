@@ -59,7 +59,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <!-- Quarkus -->
-    <quarkus.version>1.6.1.Final</quarkus.version>
+    <quarkus.version>1.7.0.Final</quarkus.version>
 
     <!-- common -->
     <commons-lang.version>3.10</commons-lang.version>
