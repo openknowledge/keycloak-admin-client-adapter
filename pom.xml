@@ -64,7 +64,7 @@
     <mp-config.version>1.4</mp-config.version>
 
     <!-- keycloak -->
-    <keycloak-admin-client.version>10.0.2</keycloak-admin-client.version>
+    <keycloak-admin-client.version>12.0.4</keycloak-admin-client.version>
     <bcprov-jdk15on.version>1.65.01</bcprov-jdk15on.version>
 
     <!-- common -->
