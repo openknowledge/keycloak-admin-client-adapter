@@ -6,7 +6,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.openknowledge.authentication</groupId>
   <artifactId>keycloak-admin-client-adapter</artifactId>
-  <version>1.5.3</version>
+  <version>1.5.4</version>
   <packaging>jar</packaging>
 
   <name>Keycloak Admin Client Adapter</name>
@@ -65,7 +65,7 @@
 
     <!-- keycloak -->
     <keycloak-admin-client.version>12.0.4</keycloak-admin-client.version>
-    <bcprov-jdk15on.version>1.65.01</bcprov-jdk15on.version>
+    <bcprov-jdk15on.version>1.67</bcprov-jdk15on.version>
 
     <!-- common -->
     <commons-lang.version>3.10</commons-lang.version>
