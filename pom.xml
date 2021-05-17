@@ -65,7 +65,7 @@
 
     <!-- keycloak -->
     <keycloak-admin-client.version>12.0.4</keycloak-admin-client.version>
-    <bcprov-jdk15on.version>1.65.01</bcprov-jdk15on.version>
+    <bcprov-jdk15on.version>1.67</bcprov-jdk15on.version>
 
     <!-- common -->
     <commons-lang.version>3.10</commons-lang.version>
