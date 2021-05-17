@@ -39,7 +39,7 @@ public class KeycloakAdminTester {
   private static final Issuer ISSUER = Issuer.fromValue("keycloakAdmin");
 
   private static final KeycloakServiceConfiguration SERVICE_CONFIG =
-      new KeycloakServiceConfiguration("harbor", "react-loyalty");
+      new KeycloakServiceConfiguration("realmName", "react-client");
   private static final KeycloakAdapterConfiguration ADAPTER_CONFIG =
       new KeycloakAdapterConfiguration("http://localhost:8000/auth",
       "master",

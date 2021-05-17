@@ -83,36 +83,26 @@ public class KeycloakRegistrationService {
       throw new RegistrationFailedException(userAccount.getUsername().getValue());
     }
 
-    // create new user
-    UserAccount newUserAccount;
     try {
-      EmailVerifiedMode emailVerifiedMode = getEmailVerifiedMode();
-      newUserAccount = keycloakUserService.createUser(userAccount, emailVerifiedMode);
+      // create new user
+      UserAccount newUserAccount = keycloakUserService.createUser(userAccount, getEmailVerifiedMode());
+
+      // if the clientId as realm role is required to access client
+      if (isRoleRequired()) {
+        // client id as role to access client (because: required role extension)
+        ClientId clientId = ClientId.fromValue(serviceConfiguration.getClientId());
+        keycloakUserService.joinRoles(newUserAccount.getIdentifier(), RoleType.REALM, RoleName.fromValue(clientId.getValue().toUpperCase()));
+      }
+
+      return newUserAccount;
     } catch (UserCreationFailedException e) {
       throw new RegistrationFailedException(e);
     }
-
-    // if the clientId as realm role is required to access client
-    if (isRoleRequired()) {
-      // client id as role to access client (because: required role extension)
-      ClientId clientId = ClientId.fromValue(serviceConfiguration.getClientId());
-      keycloakUserService.joinRoles(newUserAccount.getIdentifier(), RoleType.REALM, RoleName.fromValue(clientId.getValue().toUpperCase()));
-    }
-
-    return userAccount;
   }
 
   public UserIdentifier verifyEmailAddress(VerificationLink link, Issuer issuer) throws InvalidTokenException {
-    // convert verificationLink to token
-    Token token = keycloakTokenService.decode(link);
-
-    // validate token and create detailed error message if invalid
-    if (!token.isValid(issuer)) {
-      throw new InvalidTokenException(token, issuer);
-    }
-
-    // convert to customerNumber and load account
-    UserIdentifier userIdentifier = token.asUserIdentifier();
+    // convert to user identifier and load account
+    UserIdentifier userIdentifier = verify(link, issuer);
 
     // load user and set email verified
     UserAccount userAccount = keycloakUserService.getUser(userIdentifier);
@@ -122,6 +112,18 @@ public class KeycloakRegistrationService {
     keycloakUserService.updateUser(userAccount);
 
     return userIdentifier;
+  }
+
+  public UserIdentifier verify(VerificationLink link, Issuer issuer) throws InvalidTokenException {
+    // convert verificationLink to token
+    Token token = keycloakTokenService.decode(link);
+
+    // validate token and create detailed error message if invalid
+    if (!token.isValid(issuer)) {
+      throw new InvalidTokenException(token, issuer);
+    }
+
+    return token.asUserIdentifier();
   }
 
   public VerificationLink createVerificationLink(UserAccount userAccount, Issuer issuer) {
