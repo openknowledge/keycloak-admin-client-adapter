@@ -35,30 +35,45 @@ public class UserAccount {
   private Boolean emailVerified;
 
   /**
-   * UserAccount for user in keycloak with email address and password
+   * UserAccount for user in keycloak with identifier and email address (username equals email address)
    *
-   * @param theEmailAddress - the keycloak email address and the username
+   * @param theIdentifier   - the keycloak identifier
+   * @param theEmailAddress - the keycloak email address
    */
-  public UserAccount(EmailAddress theEmailAddress) {
-    this(null, Username.fromValue(theEmailAddress.getValue()), theEmailAddress, null);
-  }
-
   public UserAccount(UserIdentifier theIdentifier, EmailAddress theEmailAddress) {
     this(theIdentifier, Username.fromValue(theEmailAddress.getValue()), theEmailAddress, null);
   }
 
   /**
-   * UserAccount for user in keycloak with email address and password
+   * UserAccount for user in keycloak with identifier, username and email address
    *
-   * @param theEmailAddress - the keycloak email address and the username
-   * @param thePassword     - the keycloak password
+   * @param theIdentifier   - the keycloak identifier
+   * @param theUsername     - the keycloak username
+   * @param theEmailAddress - the keycloak email address
    */
-  public UserAccount(EmailAddress theEmailAddress, Password thePassword) {
-    this(null, Username.fromValue(theEmailAddress.getValue()), theEmailAddress, thePassword);
+  public UserAccount(UserIdentifier theIdentifier, Username theUsername, EmailAddress theEmailAddress) {
+    this(theIdentifier, theUsername, theEmailAddress, null);
   }
 
+  /**
+   * UserAccount for user in keycloak with identifier, email address and password (username equals email address)
+   *
+   * @param theIdentifier   - the keycloak identifier
+   * @param theEmailAddress - the keycloak email address
+   * @param thePassword     - the keycloak password
+   */
   public UserAccount(UserIdentifier theIdentifier, EmailAddress theEmailAddress, Password thePassword) {
     this(theIdentifier, Username.fromValue(theEmailAddress.getValue()), theEmailAddress, thePassword);
+  }
+
+  /**
+   * UserAccount for user in keycloak with username and email address
+   *
+   * @param theUsername     - the keycloak username
+   * @param theEmailAddress - the keycloak email address
+   */
+  public UserAccount(Username theUsername, EmailAddress theEmailAddress) {
+    this(null, theUsername, theEmailAddress, null);
   }
 
   /**
@@ -72,6 +87,33 @@ public class UserAccount {
     this(null, theUsername, theEmailAddress, thePassword);
   }
 
+  /**
+   * UserAccount for user in keycloak with email address (username equals email address)
+   *
+   * @param theEmailAddress - the keycloak email address and the username
+   */
+  public UserAccount(EmailAddress theEmailAddress) {
+    this(null, Username.fromValue(theEmailAddress.getValue()), theEmailAddress, null);
+  }
+
+  /**
+   * UserAccount for user in keycloak with email address and password (username equals email address)
+   *
+   * @param theEmailAddress - the keycloak email address and the username
+   * @param thePassword     - the keycloak password
+   */
+  public UserAccount(EmailAddress theEmailAddress, Password thePassword) {
+    this(null, Username.fromValue(theEmailAddress.getValue()), theEmailAddress, thePassword);
+  }
+
+  /**
+   * UserAccount for user in keycloak with identifier, username, email address and password
+   *
+   * @param theIdentifier   - the keycloak identifier
+   * @param theUsername     - the keycloak username
+   * @param theEmailAddress - the keycloak email address
+   * @param thePassword     - the keycloak password
+   */
   public UserAccount(UserIdentifier theIdentifier, Username theUsername, EmailAddress theEmailAddress, Password thePassword) {
     identifier = theIdentifier;
     username = theUsername;

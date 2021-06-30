@@ -18,6 +18,7 @@ package de.openknowledge.authentication.domain.user;
 import static org.apache.commons.lang3.Validate.notNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -211,6 +212,19 @@ public class KeycloakUserService {
         default:
           throw new IllegalArgumentException("unsupported roleType " + roleType);
       }
+    } catch (NotFoundException e) {
+      throw new UserNotFoundException(identifier, e);
+    }
+  }
+
+  public void executeActionsEmail(UserIdentifier identifier, RedirectUrl redirectUrl, Integer lifespan, UserAction... actions) {
+    notNull(identifier, "identifier may be not null");
+    try {
+      UserResource userResource = keycloakAdapter.findUsersResource(getRealmName()).get(identifier.getValue());
+      userResource.executeActionsEmail(getClientId().getValue(),
+        redirectUrl.getValue(),
+        lifespan,
+        Arrays.stream(actions).map(UserAction::name).collect(Collectors.toList()));
     } catch (NotFoundException e) {
       throw new UserNotFoundException(identifier, e);
     }
