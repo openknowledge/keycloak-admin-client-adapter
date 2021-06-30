@@ -22,7 +22,9 @@ import de.openknowledge.authentication.domain.user.FirstName;
 import de.openknowledge.authentication.domain.user.KeycloakUserService;
 import de.openknowledge.authentication.domain.user.LastName;
 import de.openknowledge.authentication.domain.user.Name;
+import de.openknowledge.authentication.domain.user.RedirectUrl;
 import de.openknowledge.authentication.domain.user.UserAccount;
+import de.openknowledge.authentication.domain.user.UserAction;
 import de.openknowledge.authentication.domain.user.UserNotFoundException;
 
 public class KeycloakAdminTester {
@@ -41,7 +43,7 @@ public class KeycloakAdminTester {
   private static final KeycloakServiceConfiguration SERVICE_CONFIG = 
       new KeycloakServiceConfiguration("realmName", "react-client");
   private static final KeycloakAdapterConfiguration ADAPTER_CONFIG =
-      new KeycloakAdapterConfiguration("http://localhost:8000/auth",
+      new KeycloakAdapterConfiguration("http://localhost:8282/auth",
       "master",
       "admin-cli",
       "admin",
@@ -87,6 +89,10 @@ public class KeycloakAdminTester {
     if (!foundUserAccount.getEmailAddress().getValue().equals(EMAIL_ADDRESS.getValue())) {
       System.err.println("user (id=" + createdUserAccount.getIdentifier() + ") is not valid");
     }
+
+    USER_SERVICE.executeActionsEmail(createdUserAccount.getIdentifier(),
+      RedirectUrl.fromValue("http://localhost:3000"), null, UserAction.UPDATE_PASSWORD, UserAction.UPDATE_PROFILE);
+    System.out.println("user (id=" + createdUserAccount.getIdentifier() + ") receives an actions email");
 
     USER_SERVICE.leaveGroups(createdUserAccount.getIdentifier(), PROGRAM_ANALYST);
     System.out.println("user (id=" + createdUserAccount.getIdentifier() + ") leaves groups " + PROGRAM_ANALYST);
