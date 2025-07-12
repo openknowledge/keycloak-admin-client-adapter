@@ -68,7 +68,7 @@
     <bcprov-jdk15on.version>1.67</bcprov-jdk15on.version>
 
     <!-- common -->
-    <commons-lang.version>3.10</commons-lang.version>
+    <commons-lang.version>3.18.0</commons-lang.version>
 
     <!-- logging -->
     <slf4j.version>1.7.30</slf4j.version>
